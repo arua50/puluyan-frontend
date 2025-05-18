@@ -16,10 +16,7 @@ export default [
         sourceType: 'module',
       },
     },
-    build: {
-      chunkSizeWarningLimit: 1000, // increases default limit from 500 KB
-    },
-      plugins: {
+    plugins: {
       'react-hooks': reactHooks,
       'react-refresh': reactRefresh,
     },
