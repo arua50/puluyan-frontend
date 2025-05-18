@@ -24,6 +24,7 @@ const Exhibitions = () => {
     <div className="p-6 max-w-4xl mx-auto">
       <h1 className="text-2xl font-bold mb-4 text-center">Exhibitions</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        
         {exhibitions.map((exhibition) => {
           const { id, exb_title, startDate, endDate } = exhibition;
 
