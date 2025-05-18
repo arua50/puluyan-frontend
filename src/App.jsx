@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import ScanArtwork from "./pages/ScanArtwork";
 import Exhibitions from "./pages/Exhibitions"; // ← NEW
+import Artworks from "./pages/Artworks";
 
 function App() {
   return (
@@ -11,7 +12,8 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/scan" element={<ScanArtwork />} />
-        <Route path="/exhibitions" element={<Exhibitions />} /> {/* NEW */}
+        <Route path="/exhibitions" element={<Exhibitions />} />
+        <Route path="/exhibitions/:id" element={<Artworks />} /> {/* NEW */}
       </Routes>
     </Router>
   );

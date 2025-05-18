@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Exhibitions = () => {
   const [exhibitions, setExhibitions] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchExhibitions = async () => {
@@ -20,18 +22,22 @@ const Exhibitions = () => {
     fetchExhibitions();
   }, []);
 
+  const handleExhibitionClick = (id) => {
+    navigate(`/exhibitions/${id}`);
+  };
+
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <h1 className="text-2xl font-bold mb-4 text-center">Exhibitions</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        
         {exhibitions.map((exhibition) => {
           const { id, exb_title, startDate, endDate } = exhibition;
 
           return (
             <div
               key={id}
-              className="relative rounded shadow overflow-hidden bg-gray-100"
+              className="cursor-pointer relative rounded shadow overflow-hidden bg-gray-100 hover:shadow-lg transition-shadow"
+              onClick={() => handleExhibitionClick(id)}
             >
               <img
                 src="https://via.placeholder.com/400x200?text=No+Image"
