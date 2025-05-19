@@ -1,0 +1,161 @@
+/* ──────────────────────────────────────────────────────────
+   0.  FULL-SCREEN WEBCAM WRAPPER
+   ────────────────────────────────────────────────────────── */
+.scan-wrapper {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;         /* crop overflow video */
+}
+
+/* make the underlying <video> behave like a hero background */
+.scan-wrapper video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;        /* preserve aspect, crop excess */
+  display: block;
+}
+
+/* ──────────────────────────────────────────────────────────
+   1.  SCANNING OVERLAY
+   ────────────────────────────────────────────────────────── */
+.frame-lines {
+  --line: 4px;
+  --size: 48px;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* four pink corners */
+.frame-lines::before,
+.frame-lines::after,
+.frame-lines .bl,
+.frame-lines .tr {
+  content: "";
+  position: absolute;
+  width: var(--size);
+  height: var(--size);
+  border: var(--line) solid #ff2d86;
+}
+/* top-left */
+.frame-lines::before         { top: 0;  left: 0;  border-right: none; border-bottom: none; }
+/* bottom-right */
+.frame-lines::after          { bottom: 0; right: 0; border-left: none; border-top: none;  }
+/* bottom-left */
+.frame-lines .bl             { bottom: 0; left: 0;  border-right: none; border-top: none; }
+/* top-right */
+.frame-lines .tr             { top: 0;  right: 0;   border-left: none; border-bottom: none; }
+
+/* white logo top-right while scanning */
+.scan-logo {
+  position: absolute;
+  top: 20px;
+  right: 28px;
+  font-family: "Georgia", serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: #fff;
+  text-shadow: 0 1px 4px rgba(0,0,0,.65);
+}
+
+
+
+.desc-cardsmall {
+  position: fixed;
+  left: 50%;
+  bottom: 40px; /* small space from bottom */
+  transform: translateX(-50%);
+  width: 80%;
+  max-width: 360px;
+  background: rgba(0, 0, 0, 0.85);
+  color: #fff;
+  padding: 1.5rem 1.75rem 4.5rem;
+  border-radius: 14px;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+  text-align: center;
+  z-index: 9999;
+  height: 8px;
+}
+:root {
+  --bar-height: 56px;   /* total bar height */
+}
+
+.desc-cardsmall .buttons-bar {
+  display: flex;
+  justify-content: space-between; /* spread buttons left‒right */
+  align-items: center;            /* ⇣ centers buttons vertically ⇡ */
+  height: var(--bar-height);      /* fixed height */
+  gap: 16px;                      /* space between buttons */
+  /* remove margin-bottom if you no longer need it */
+}
+/* ──────────────────────────────────────────────────────────
+   4.  DESCRIPTION CARD (Centered horizontally, near bottom)
+   ────────────────────────────────────────────────────────── */
+.desc-card {
+  position: fixed;
+  left: 50%;
+  bottom: 40px; /* small space from bottom */
+  transform: translateX(-50%);
+  width: 80%;
+  max-width: 360px;
+  background: rgba(0, 0, 0, 0.85);
+  color: #fff;
+  padding: 1.5rem 1.75rem 4.5rem;
+  border-radius: 14px;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+  text-align: center;
+  z-index: 9999;
+}
+.desc-card .buttons-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  gap: 16px;
+}
+
+/* text styling */
+.desc-card h3 {
+  font-size: 1.35rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+   text-align: left;
+}
+.desc-card h4 {
+  font-size: 1.05rem;
+  font-weight: 400;
+  opacity: 0.75;
+  margin-bottom: 1rem;
+   text-align: left;
+}
+.desc-card p
+ {
+  font-size: 1rem;
+  line-height: 1.5;
+  max-height: 12rem;
+  overflow-y: auto;
+  text-align: left;
+}
+
+/* buttons bar inside the card */
+
+
+/* updated button style replacing .btn-circle */
+.desc-btn {
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  color: #fff;
+  font-size: 1.25rem;
+  cursor: pointer;
+  transition: background-color 0.25s ease;
+  user-select: none;
+}
+.desc-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}

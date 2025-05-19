@@ -11,11 +11,21 @@ const Artworks = () => {
     const fetchArtworks = async () => {
       try {
         const response = await fetch(
-          `https://puluyanartgallery.onrender.com/api/artworks?populate=coverImage,artist,exhibition&filters[exhibition][id][$eq]=${id}`
+          `https://puluyanartgallery.onrender.com/api/artworks?filters[exhibition][id][$eq]=${id}&populate=*`
         );
         const json = await response.json();
         console.log("Fetched artworks:", json);
-        setArtworks(json.data || []);
+
+        const simplified = json.data.map((item) => ({
+          id: item.id,
+          title: item?.art_title || "Untitled",
+          artist: item?.artist?.data?.name || "Unknown Artist",
+          image: item?.coverImage?.data?.url
+            ? `https://puluyanartgallery.onrender.com${item.coverImage.data.url}`
+            : "https://via.placeholder.com/400x300?text=No+Image",
+        }));
+
+        setArtworks(simplified);
       } catch (err) {
         console.error("Error fetching artworks:", err);
         setError("Failed to load artworks.");
@@ -27,40 +37,52 @@ const Artworks = () => {
     fetchArtworks();
   }, [id]);
 
-  if (loading) return <p className="text-center">Loading...</p>;
-  if (error) return <p className="text-center text-red-500">{error}</p>;
+  if (loading) return <p style={{ textAlign: "center" }}>Loading...</p>;
+  if (error)
+    return <p style={{ textAlign: "center", color: "red" }}>{error}</p>;
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4 text-center">Artworks in Exhibition</h1>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {artworks.map((artwork) => {
-          const { id, attributes } = artwork;
-          const { art_title, artist, coverImage } = attributes;
-
-          const imageUrl = coverImage?.data?.attributes?.url
-            ? `https://puluyanartgallery.onrender.com${coverImage.data.attributes.url}`
-            : "https://via.placeholder.com/400x300?text=No+Image";
-
-          const artistName = artist?.data?.attributes?.name || "Unknown Artist";
-
-          return (
-            <div
-              key={id}
-              className="rounded shadow bg-white overflow-hidden"
-            >
-              <img
-                src={imageUrl}
-                alt={art_title}
-                className="w-full h-48 object-cover"
-              />
-              <div className="p-4">
-                <h2 className="text-lg font-semibold mb-1">{art_title}</h2>
-                <p className="text-gray-600">By {artistName}</p>
-              </div>
+    <div style={{ padding: "24px", maxWidth: "960px", margin: "0 auto" }}>
+      <h1
+        style={{
+          fontSize: "24px",
+          fontWeight: "bold",
+          textAlign: "center",
+          marginBottom: "20px",
+        }}
+      >
+        Artworks in Exhibition
+      </h1>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+          gap: "16px",
+        }}
+      >
+        {artworks.map((artwork) => (
+          <div
+            key={artwork.id}
+            style={{
+              borderRadius: "8px",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+              backgroundColor: "#fff",
+              overflow: "hidden",
+            }}
+          >
+            <img
+              src={artwork.image}
+              alt={artwork.title}
+              style={{ width: "100%", height: "200px", objectFit: "cover" }}
+            />
+            <div style={{ padding: "16px" }}>
+              <h2 style={{ fontSize: "18px", fontWeight: "600", marginBottom: "8px" }}>
+                {artwork.title}
+              </h2>
+              <p style={{ color: "#666" }}>By {artwork.artist}</p>
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
     </div>
   );

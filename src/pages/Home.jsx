@@ -1,4 +1,3 @@
-// src/pages/Home.jsx
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -6,20 +5,64 @@ const Home = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="h-screen flex flex-col justify-center items-center bg-gray-100 text-center">
-      <h1 className="text-3xl font-bold mb-6">Welcome to Puluy-an Art Gallery</h1>
-      <div className="flex gap-4">
+    <div
+      style={{
+        minHeight: "100vh",
+        backgroundColor: "#fff",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "2rem",
+      }}
+    >
+      {/* Logo */}
+      <img
+        src="/logo.png" // Make sure this path is correct
+        alt="Puluy-an Logo"
+        style={{
+          width: "180px",
+          marginBottom: "3rem",
+        }}
+      />
+
+      {/* Buttons */}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "1rem",
+        }}
+      >
         <button
           onClick={() => navigate("/scan")}
-          className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow"
+          style={{
+            backgroundColor: "#8B0000", // deep red
+            color: "#fff",
+            padding: "0.75rem 2rem",
+            borderRadius: "9999px", // fully rounded
+            fontWeight: "bold",
+            fontSize: "1rem",
+            border: "none",
+            cursor: "pointer",
+          }}
         >
-          Scan Artwork
+          Play
         </button>
         <button
           onClick={() => navigate("/exhibitions")}
-          className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg shadow"
+          style={{
+            backgroundColor: "#8B0000",
+            color: "#fff",
+            padding: "0.75rem 2rem",
+            borderRadius: "9999px",
+            fontWeight: "bold",
+            fontSize: "1rem",
+            border: "none",
+            cursor: "pointer",
+          }}
         >
-          View Exhibitions
+          Archives
         </button>
       </div>
     </div>

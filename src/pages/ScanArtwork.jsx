@@ -1,96 +1,103 @@
 import React, { useEffect, useRef, useState } from "react";
 import Webcam from "react-webcam";
 import * as tmImage from "@teachablemachine/image";
+import "./ScanArtwork.css";
+
+/* CONFIG */
+const MODEL_URL = "https://teachablemachine.withgoogle.com/models/1RphcVieu/";
+const API_BASE =
+  "https://puluyanartgallery.onrender.com/api/artworks?populate=*";
 
 const ScanArtwork = () => {
   const webcamRef = useRef(null);
-  const [model, setModel] = useState(null);
+  const pollRef   = useRef(null);
+
+  /* state */
+  const [model, setModel]                 = useState(null);
   const [maxPrediction, setMaxPrediction] = useState(null);
+
+  const [title, setTitle]             = useState("");
+  const [artist, setArtist]           = useState("");
   const [description, setDescription] = useState("");
-  const [speaking, setSpeaking] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
+
   const [showDescription, setShowDescription] = useState(false);
+  const [isPaused, setIsPaused]               = useState(false);
 
-  const MODEL_URL = "https://teachablemachine.withgoogle.com/models/1RphcVieu/";
-
+  /* load model */
   useEffect(() => {
-    const loadModel = async () => {
+    (async () => {
       try {
-        const loadedModel = await tmImage.load(
-          MODEL_URL + "model.json",
-          MODEL_URL + "metadata.json"
+        const m = await tmImage.load(
+          `${MODEL_URL}model.json`,
+          `${MODEL_URL}metadata.json`
         );
-        setModel(loadedModel);
-      } catch (error) {
-        console.error("Failed to load Teachable Machine model:", error);
+        setModel(m);
+      } catch (e) {
+        console.error("TM load error", e);
       }
-    };
-    loadModel();
+    })();
   }, []);
 
+  /* start polling */
   useEffect(() => {
-    const interval = setInterval(() => {
-      predict();
-    }, 3000);
-    return () => clearInterval(interval);
+    if (!model) return;
+    pollRef.current = setInterval(() => predict(model), 3000);
+    return () => {
+      clearInterval(pollRef.current);
+      window.speechSynthesis.cancel();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [model]);
 
-  const predict = async () => {
-    if (
-      model &&
-      webcamRef.current &&
-      webcamRef.current.video &&
-      webcamRef.current.video.readyState === 4
-    ) {
-      try {
-        const prediction = await model.predict(webcamRef.current.video);
-        const highest = prediction.reduce((a, b) =>
-          a.probability > b.probability ? a : b
-        );
-        if (highest.probability > 0.9 && highest.className !== maxPrediction) {
-          setMaxPrediction(highest.className);
-          fetchArtworkDescription(highest.className);
-        }
-      } catch (error) {
-        console.error("Prediction error:", error);
+  /* predict */
+  const predict = async (m) => {
+    if (!webcamRef.current?.video) return;
+    if (webcamRef.current.video.readyState !== 4) return;
+    try {
+      const preds   = await m.predict(webcamRef.current.video);
+      const highest = preds.reduce((a, b) =>
+        a.probability > b.probability ? a : b
+      );
+      if (highest.probability > 0.9 && highest.className !== maxPrediction) {
+        setMaxPrediction(highest.className);
+        await fetchArtwork(highest.className);
       }
+    } catch (e) {
+      console.error("Prediction error", e);
     }
   };
 
-  const fetchArtworkDescription = async (label) => {
+  /* fetch artwork */
+  const fetchArtwork = async (label) => {
     try {
-      const url = `https://puluyanartgallery.onrender.com/api/artworks?filters[documentId][$eq]=${label}`;
-      console.log("Fetching from:", url);
-      const response = await fetch(url);
-      const data = await response.json();
-
-      if (data.data && data.data.length > 0) {
-        const descriptionText = data.data[0].art_description || "No description available.";
-        setDescription(descriptionText);
-        setShowDescription(true);
-        playVoice(descriptionText);
+      const res  = await fetch(`${API_BASE}&filters[documentId][$eq]=${label}`);
+      const json = await res.json();
+      if (json.data?.length) {
+        const art = json.data[0];
+        setTitle(art.art_title || "Untitled");
+        setArtist(art.artist || "Unknown artist");
+        setDescription(art.art_description || "No description available.");
+        setShowDescription(false);
+        speak(art.art_description);
       } else {
+        setTitle("");
+        setArtist("");
         setDescription("Artwork not found in the database.");
         setShowDescription(true);
+        speak("Artwork not found.");
       }
-    } catch (error) {
-      console.error("Error fetching artwork description:", error);
-      setDescription("Failed to fetch artwork description.");
-      setShowDescription(true);
+    } catch (e) {
+      console.error("API error", e);
     }
   };
 
-  const playVoice = (text) => {
-    const newUtterance = new SpeechSynthesisUtterance(text);
-    newUtterance.lang = "en-US";
-    newUtterance.onend = () => {
-      setSpeaking(false);
-      setIsPaused(false);
-    };
+  /* voice utils */
+  const speak = (txt) => {
     window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(newUtterance);
-    setSpeaking(true);
-    setIsPaused(false);
+    const u    = new SpeechSynthesisUtterance(txt);
+    u.lang     = "en-US";
+    u.onend    = () => setIsPaused(false);
+    window.speechSynthesis.speak(u);
   };
 
   const toggleVoice = () => {
@@ -103,38 +110,69 @@ const ScanArtwork = () => {
     }
   };
 
+  /* render */
   return (
-    <div className="text-center p-4">
-      <Webcam ref={webcamRef} screenshotFormat="image/jpeg" width={350} />
-      <h2 className="text-xl mt-4">
-        Detected Artwork: {maxPrediction || "Scanning..."}
-      </h2>
+    <div className="text-center">
+      <div className="scan-wrapper">
+        <Webcam ref={webcamRef} screenshotFormat="image/jpeg" />
 
-      {description && (
-        <div className="mt-4">
-          <button
-            onClick={() => setShowDescription(!showDescription)}
-            className="mb-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded"
-          >
-            {showDescription ? "Hide Description" : "Show Description"}
-          </button>
+        {/* 1 ▸ scanning overlay */}
+        {!description && (
+          <>
+            <div className="frame-lines">
+              <div className="bl" />
+              <div className="tr" />
+            </div>
+            <span className="scan-logo">PULUY·AN</span>
+          </>
+        )}
 
-          {showDescription && (
-            <p className="mt-2 max-w-xl mx-auto text-gray-800 bg-gray-100 p-4 rounded shadow">
-              {description}
-            </p>
-          )}
-
-          <div className="mt-4 flex justify-center">
-            <button
-              onClick={toggleVoice}
-              className="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded"
+        {/* 2 ▸ buttons bar (description hidden) */}
+        {description && !showDescription && (
+          <div className="desc-cardsmall">
+            <div className="buttons-bar">
+            <div onClick={toggleVoice}>
+              {isPaused ? "▶" : "⏸"}
+            </div>
+            <div
+              
+              onClick={() => setShowDescription(true)}
+              title="Show description"
             >
-              {isPaused ? "|>" : "||"}
-            </button>
+              ▲
+            </div>
+             </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* 3 ▸ description card */}
+        {showDescription && (
+          <div className="desc-card">
+            <div className="buttons-bar">
+               
+              <div  onClick={toggleVoice}>
+                {isPaused ? "▶" : "⏸"}
+              
+              </div>
+              
+              <div
+                
+                onClick={() => setShowDescription(false)}
+                title="Hide description"
+              >
+                ▼
+           
+          </div>
+            </div>
+            <h3>{title}</h3>
+            <h4>{artist}</h4>
+            <p>{description}</p>
+          </div>
+        )}
+      </div>
+
+      {/* status */}
+      
     </div>
   );
 };
