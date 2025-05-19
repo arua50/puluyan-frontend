@@ -4,7 +4,8 @@ import * as tmImage from "@teachablemachine/image";
 import "./ScanArtwork.css";
 
 /* CONFIG */
-const MODEL_URL = "https://teachablemachine.withgoogle.com/models/1RphcVieu/";
+const MODEL_URL =
+  "https://teachablemachine.withgoogle.com/models/1RphcVieu/";
 const API_BASE =
   "https://puluyanartgallery.onrender.com/api/artworks?populate=*";
 
@@ -22,6 +23,12 @@ const ScanArtwork = () => {
 
   const [showDescription, setShowDescription] = useState(false);
   const [isPaused, setIsPaused]               = useState(false);
+
+  /* ---------- NEW: video constraints helper ---------- */
+  const videoConstraints = {
+    // Use rear cam on mobile; desktop browsers just ignore facingMode
+    facingMode: { exact: "environment" }
+  };
 
   /* load model */
   useEffect(() => {
@@ -114,7 +121,12 @@ const ScanArtwork = () => {
   return (
     <div className="text-center">
       <div className="scan-wrapper">
-        <Webcam ref={webcamRef} screenshotFormat="image/jpeg" />
+        {/* ▲▲ Use rear camera on phones */}
+        <Webcam
+          ref={webcamRef}
+          screenshotFormat="image/jpeg"
+          videoConstraints={videoConstraints}
+        />
 
         {/* 1 ▸ scanning overlay */}
         {!description && (
@@ -131,17 +143,16 @@ const ScanArtwork = () => {
         {description && !showDescription && (
           <div className="desc-cardsmall">
             <div className="buttons-bar">
-            <div onClick={toggleVoice}>
-              {isPaused ? "▶" : "⏸"}
+              <div onClick={toggleVoice}>
+                {isPaused ? "▶" : "⏸"}
+              </div>
+              <div
+                onClick={() => setShowDescription(true)}
+                title="Show description"
+              >
+                ▲
+              </div>
             </div>
-            <div
-              
-              onClick={() => setShowDescription(true)}
-              title="Show description"
-            >
-              ▲
-            </div>
-             </div>
           </div>
         )}
 
@@ -149,20 +160,15 @@ const ScanArtwork = () => {
         {showDescription && (
           <div className="desc-card">
             <div className="buttons-bar">
-               
-              <div  onClick={toggleVoice}>
+              <div onClick={toggleVoice}>
                 {isPaused ? "▶" : "⏸"}
-              
               </div>
-              
               <div
-                
                 onClick={() => setShowDescription(false)}
                 title="Hide description"
               >
                 ▼
-           
-          </div>
+              </div>
             </div>
             <h3>{title}</h3>
             <h4>{artist}</h4>
@@ -170,9 +176,6 @@ const ScanArtwork = () => {
           </div>
         )}
       </div>
-
-      {/* status */}
-      
     </div>
   );
 };
