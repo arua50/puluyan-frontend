@@ -1,18 +1,33 @@
 /* ──────────────────────────────────────────────────────────
    0.  FULL-SCREEN WEBCAM WRAPPER
    ────────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body,
+html,
+#root {
+  height: 100%;
+}
+
 .scan-wrapper {
   position: relative;
   width: 100vw;
   height: 100vh;
-  overflow: hidden;         /* crop overflow video */
+  overflow: hidden;        /* crop overflow video */
+  background: #000;
 }
 
 /* make the underlying <video> behave like a hero background */
 .scan-wrapper video {
   width: 100%;
   height: 100%;
-  object-fit: cover;        /* preserve aspect, crop excess */
+  object-fit: cover;       /* preserve aspect ratio, crop excess */
   display: block;
 }
 
@@ -39,102 +54,127 @@
   border: var(--line) solid #ff2d86;
 }
 /* top-left */
-.frame-lines::before         { top: 0;  left: 0;  border-right: none; border-bottom: none; }
+.frame-lines::before { top: 0; left: 0; border-right: none; border-bottom: none; }
 /* bottom-right */
-.frame-lines::after          { bottom: 0; right: 0; border-left: none; border-top: none;  }
+.frame-lines::after  { bottom: 0; right: 0; border-left: none; border-top: none; }
 /* bottom-left */
-.frame-lines .bl             { bottom: 0; left: 0;  border-right: none; border-top: none; }
+.frame-lines .bl     { bottom: 0; left: 0; border-right: none; border-top: none; }
 /* top-right */
-.frame-lines .tr             { top: 0;  right: 0;   border-left: none; border-bottom: none; }
+.frame-lines .tr     { top: 0; right: 0; border-left: none; border-bottom: none; }
 
 /* white logo top-right while scanning */
 .scan-logo {
   position: absolute;
   top: 20px;
   right: 28px;
-  font-family: "Georgia", serif;
-  font-size: 0.95rem;
+  font-family: Georgia, serif;
+  font-size: clamp(.9rem, 3vw, 1.1rem);
   font-weight: 700;
-  letter-spacing: 0.03em;
+  letter-spacing: .03em;
   color: #fff;
   text-shadow: 0 1px 4px rgba(0,0,0,.65);
 }
 
+/* ──────────────────────────────────────────────────────────
+   2.  CAMERA-FLIP BUTTON
+   ────────────────────────────────────────────────────────── */
+.cam-flip-btn {
+  position: absolute;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 5;
+  width: 3.2rem;
+  height: 3.2rem;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0,0,0,.5);
+  color: #fff;
+  font-size: 1.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(2px);
+  transition: background .25s;
+}
+.cam-flip-btn:hover  { background: rgba(0,0,0,.7); }
+.cam-flip-btn:active { transform: scale(.95); }
 
-
+/* ──────────────────────────────────────────────────────────
+   3.  COLLAPSED “BUTTONS BAR” CARD
+   ────────────────────────────────────────────────────────── */
+:root { --bar-height: 56px; }
 
 .desc-cardsmall {
   position: fixed;
   left: 50%;
-  bottom: 40px; /* small space from bottom */
+  bottom: 40px;
   transform: translateX(-50%);
   width: 80%;
   max-width: 360px;
-  background: rgba(0, 0, 0, 0.85);
-  color: #fff;
-  padding: 1.5rem 1.75rem 4.5rem;
-  border-radius: 14px;
+  height: var(--bar-height);
+  background: rgba(0,0,0,.85);
   backdrop-filter: blur(6px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
-  text-align: center;
+  border-radius: 14px;
+  box-shadow: 0 12px 30px rgba(0,0,0,.6);
   z-index: 9999;
-  height: 8px;
-}
-:root {
-  --bar-height: 56px;   /* total bar height */
+  display: flex;
+  align-items: center;
 }
 
 .desc-cardsmall .buttons-bar {
+  width: 100%;
   display: flex;
-  justify-content: space-between; /* spread buttons left‒right */
-  align-items: center;            /* ⇣ centers buttons vertically ⇡ */
-  height: var(--bar-height);      /* fixed height */
-  gap: 16px;                      /* space between buttons */
-  /* remove margin-bottom if you no longer need it */
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 1.25rem;
+  font-size: 1.8rem;
+  color: #fff;
 }
+
 /* ──────────────────────────────────────────────────────────
-   4.  DESCRIPTION CARD (Centered horizontally, near bottom)
+   4.  DESCRIPTION CARD (expanded)
    ────────────────────────────────────────────────────────── */
 .desc-card {
   position: fixed;
   left: 50%;
-  bottom: 40px; /* small space from bottom */
+  bottom: 40px;
   transform: translateX(-50%);
   width: 80%;
   max-width: 360px;
-  background: rgba(0, 0, 0, 0.85);
+  background: rgba(0,0,0,.85);
+  backdrop-filter: blur(6px);
+  border-radius: 14px;
+  box-shadow: 0 12px 30px rgba(0,0,0,.6);
   color: #fff;
   padding: 1.5rem 1.75rem 4.5rem;
-  border-radius: 14px;
-  backdrop-filter: blur(6px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
   text-align: center;
   z-index: 9999;
 }
+
 .desc-card .buttons-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
   gap: 16px;
+  margin-bottom: 1rem;
+  font-size: 1.8rem;
 }
 
-/* text styling */
 .desc-card h3 {
   font-size: 1.35rem;
   font-weight: 600;
   margin-bottom: 1rem;
-   text-align: left;
+  text-align: left;
 }
 .desc-card h4 {
   font-size: 1.05rem;
   font-weight: 400;
-  opacity: 0.75;
+  opacity: .75;
   margin-bottom: 1rem;
-   text-align: left;
+  text-align: left;
 }
-.desc-card p
- {
+.desc-card p {
   font-size: 1rem;
   line-height: 1.5;
   max-height: 12rem;
@@ -142,21 +182,24 @@
   text-align: left;
 }
 
-/* buttons bar inside the card */
-
-
-/* updated button style replacing .btn-circle */
+/* reusable small rectangular button */
 .desc-btn {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255,255,255,.15);
   border: none;
   border-radius: 8px;
-  padding: 0.5rem 1rem;
+  padding: .5rem 1rem;
   color: #fff;
   font-size: 1.25rem;
   cursor: pointer;
-  transition: background-color 0.25s ease;
+  transition: background .25s;
   user-select: none;
 }
-.desc-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
+.desc-btn:hover { background: rgba(255,255,255,.3); }
+
+/* ──────────────────────────────────────────────────────────
+   5.  DESKTOP SLIGHT SIZE BUMPS
+   ────────────────────────────────────────────────────────── */
+@media (min-width: 601px) {
+  .desc-card h3 { font-size: 1.5rem; }
+  .desc-card p  { font-size: 1.07rem; }
 }

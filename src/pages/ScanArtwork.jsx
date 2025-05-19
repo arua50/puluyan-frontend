@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import Webcam from "react-webcam";
 import * as tmImage from "@teachablemachine/image";
 import "./ScanArtwork.css";
@@ -11,24 +11,21 @@ const API_BASE =
 
 const ScanArtwork = () => {
   const webcamRef = useRef(null);
-  const pollRef   = useRef(null);
+  const pollRef = useRef(null);
 
   /* state */
-  const [model, setModel]                 = useState(null);
+  const [model, setModel] = useState(null);
   const [maxPrediction, setMaxPrediction] = useState(null);
 
-  const [title, setTitle]             = useState("");
-  const [artist, setArtist]           = useState("");
+  const [title, setTitle] = useState("");
+  const [artist, setArtist] = useState("");
   const [description, setDescription] = useState("");
 
   const [showDescription, setShowDescription] = useState(false);
-  const [isPaused, setIsPaused]               = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
 
-  /* ---------- NEW: video constraints helper ---------- */
-  const videoConstraints = {
-    // Use rear cam on mobile; desktop browsers just ignore facingMode
-    facingMode: { exact: "environment" }
-  };
+  // NEW — camera facingMode
+  const [facingMode, setFacingMode] = useState("environment"); // or "user"
 
   /* load model */
   useEffect(() => {
@@ -61,7 +58,7 @@ const ScanArtwork = () => {
     if (!webcamRef.current?.video) return;
     if (webcamRef.current.video.readyState !== 4) return;
     try {
-      const preds   = await m.predict(webcamRef.current.video);
+      const preds = await m.predict(webcamRef.current.video);
       const highest = preds.reduce((a, b) =>
         a.probability > b.probability ? a : b
       );
@@ -77,7 +74,7 @@ const ScanArtwork = () => {
   /* fetch artwork */
   const fetchArtwork = async (label) => {
     try {
-      const res  = await fetch(`${API_BASE}&filters[documentId][$eq]=${label}`);
+      const res = await fetch(`${API_BASE}&filters[documentId][$eq]=${label}`);
       const json = await res.json();
       if (json.data?.length) {
         const art = json.data[0];
@@ -101,9 +98,9 @@ const ScanArtwork = () => {
   /* voice utils */
   const speak = (txt) => {
     window.speechSynthesis.cancel();
-    const u    = new SpeechSynthesisUtterance(txt);
-    u.lang     = "en-US";
-    u.onend    = () => setIsPaused(false);
+    const u = new SpeechSynthesisUtterance(txt);
+    u.lang = "en-US";
+    u.onend = () => setIsPaused(false);
     window.speechSynthesis.speak(u);
   };
 
@@ -117,15 +114,20 @@ const ScanArtwork = () => {
     }
   };
 
+  /* NEW — switch camera */
+  const switchCamera = useCallback(() => {
+    setFacingMode((prev) => (prev === "user" ? "environment" : "user"));
+  }, []);
+
   /* render */
   return (
     <div className="text-center">
       <div className="scan-wrapper">
-        {/* ▲▲ Use rear camera on phones */}
         <Webcam
           ref={webcamRef}
           screenshotFormat="image/jpeg"
-          videoConstraints={videoConstraints}
+          videoConstraints={{ facingMode }}
+          className="webcam-view"
         />
 
         {/* 1 ▸ scanning overlay */}
@@ -136,6 +138,15 @@ const ScanArtwork = () => {
               <div className="tr" />
             </div>
             <span className="scan-logo">PULUY·AN</span>
+
+            {/* NEW ▸ camera-flip button (only while scanning) */}
+            <button
+              className="cam-flip-btn"
+              onClick={switchCamera}
+              title="Switch camera"
+            >
+              🔄
+            </button>
           </>
         )}
 
@@ -143,9 +154,7 @@ const ScanArtwork = () => {
         {description && !showDescription && (
           <div className="desc-cardsmall">
             <div className="buttons-bar">
-              <div onClick={toggleVoice}>
-                {isPaused ? "▶" : "⏸"}
-              </div>
+              <div onClick={toggleVoice}>{isPaused ? "▶" : "⏸"}</div>
               <div
                 onClick={() => setShowDescription(true)}
                 title="Show description"
@@ -160,9 +169,7 @@ const ScanArtwork = () => {
         {showDescription && (
           <div className="desc-card">
             <div className="buttons-bar">
-              <div onClick={toggleVoice}>
-                {isPaused ? "▶" : "⏸"}
-              </div>
+              <div onClick={toggleVoice}>{isPaused ? "▶" : "⏸"}</div>
               <div
                 onClick={() => setShowDescription(false)}
                 title="Hide description"
