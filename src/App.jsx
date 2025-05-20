@@ -7,6 +7,7 @@ import ScanArtwork  from "./pages/ScanArtwork";
 import Exhibitions  from "./pages/Exhibitions";
 import Artworks     from "./pages/Artworks";
 import AppLayout    from "./components/AppLayout";
+import ArtworkDetails from "./pages/ArtworkDetails"
 
 import "./index.css";
 
@@ -23,6 +24,7 @@ export default function App() {
           <Route path="/scan"               element={<ScanArtwork />} />
           <Route path="/exhibitions"        element={<Exhibitions />} />
           <Route path="/exhibitions/:id"    element={<Artworks />}   />
+          <Route path="/artwork/:id" element={<ArtworkDetails />} />
           {/* add more header-enabled routes here */}
         </Route>
       </Routes>

@@ -155,7 +155,7 @@ const ScanArtwork = () => {
         {description && !showDescription && (
           <div className="desc-cardsmall">
             <div className="buttons-bar">
-              <div onClick={toggleVoice}>{isPaused ? <PlayCircle size={32}/> : <PauseCircle size={32}/> }</div>
+              <div onClick={toggleVoice}>{isPaused ? <PlayCircle size={32}/> : <PauseCircle size={32}/>}</div>
               <div
                 onClick={() => setShowDescription(true)}
                 title="Show description"

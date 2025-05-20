@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 
 const Artworks = () => {
   const { id } = useParams(); // Exhibition ID
@@ -7,7 +7,6 @@ const Artworks = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Helper: construct full image URL or fallback
   const getImageUrl = (imageData) => {
     if (imageData?.data?.url) {
       return `https://puluyanartgallery.onrender.com${imageData.data.url}`;
@@ -61,14 +60,7 @@ const Artworks = () => {
 
   return (
     <div style={{ padding: "24px", maxWidth: "960px", margin: "0 auto" }}>
-      <h1
-        style={{
-          fontSize: "28px",
-          fontWeight: "bold",
-          textAlign: "center",
-          marginBottom: "24px",
-        }}
-      >
+      <h1 style={{ fontSize: "28px", fontWeight: "bold", textAlign: "center", marginBottom: "24px" }}>
         Artworks in Exhibition
       </h1>
 
@@ -85,28 +77,33 @@ const Artworks = () => {
           }}
         >
           {artworks.map((artwork) => (
-            <div
+            <Link
+              to={`/artwork/${artwork.id}`}
               key={artwork.id}
-              style={{
-                borderRadius: "10px",
-                boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
-                backgroundColor: "#fff",
-                overflow: "hidden",
-                transition: "transform 0.2s ease-in-out",
-              }}
+              style={{ textDecoration: "none", color: "inherit" }}
             >
-              <img
-                src={artwork.image}
-                alt={artwork.title || "Artwork"}
-                style={{ width: "100%", height: "200px", objectFit: "cover" }}
-              />
-              <div style={{ padding: "16px" }}>
-                <h2 style={{ fontSize: "18px", fontWeight: "600", marginBottom: "8px" }}>
-                  {artwork.title}
-                </h2>
-                <p style={{ color: "#666" }}>By {artwork.artist}</p>
+              <div
+                style={{
+                  borderRadius: "10px",
+                  boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
+                  backgroundColor: "#fff",
+                  overflow: "hidden",
+                  transition: "transform 0.2s ease-in-out",
+                }}
+              >
+                <img
+                  src={artwork.image}
+                  alt={artwork.title || "Artwork"}
+                  style={{ width: "100%", height: "200px", objectFit: "cover" }}
+                />
+                <div style={{ padding: "16px" }}>
+                  <h2 style={{ fontSize: "18px", fontWeight: "600", marginBottom: "8px" }}>
+                    {artwork.title}
+                  </h2>
+                  <p style={{ color: "#666" }}>By {artwork.artist}</p>
+                </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       )}
