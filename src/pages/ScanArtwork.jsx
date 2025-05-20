@@ -2,10 +2,11 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import Webcam from "react-webcam";
 import * as tmImage from "@teachablemachine/image";
 import "./ScanArtwork.css";
+import { ArrowDownCircle, ArrowUp01Icon, ArrowUpCircle, LucideTriangle, PauseCircle, PlayCircle, SwitchCamera, Triangle, TriangleDashed, TriangleIcon } from "lucide-react";
 
 /* CONFIG */
 const MODEL_URL =
-  "https://teachablemachine.withgoogle.com/models/1RphcVieu/";
+  "https://teachablemachine.withgoogle.com/models/hTUrBVwHQ/";
 const API_BASE =
   "https://puluyanartgallery.onrender.com/api/artworks?populate=*";
 
@@ -74,7 +75,7 @@ const ScanArtwork = () => {
   /* fetch artwork */
   const fetchArtwork = async (label) => {
     try {
-      const res = await fetch(`${API_BASE}&filters[documentId][$eq]=${label}`);
+      const res = await fetch(`${API_BASE}&filters[slug][$eq]=${label}`);
       const json = await res.json();
       if (json.data?.length) {
         const art = json.data[0];
@@ -133,10 +134,10 @@ const ScanArtwork = () => {
         {/* 1 ▸ scanning overlay */}
         {!description && (
           <>
-            <div className="frame-lines">
+            
               <div className="bl" />
               <div className="tr" />
-            </div>
+           
             
 
             {/* NEW ▸ camera-flip button (only while scanning) */}
@@ -145,7 +146,7 @@ const ScanArtwork = () => {
               onClick={switchCamera}
               title="Switch camera"
             >
-              🔄
+             <SwitchCamera/>
             </button>
           </>
         )}
@@ -154,12 +155,13 @@ const ScanArtwork = () => {
         {description && !showDescription && (
           <div className="desc-cardsmall">
             <div className="buttons-bar">
-              <div onClick={toggleVoice}>{isPaused ? "▶" : "⏸"}</div>
+              <div onClick={toggleVoice}>{isPaused ? <PlayCircle size={32}/> : <PauseCircle size={32}/> }</div>
               <div
                 onClick={() => setShowDescription(true)}
                 title="Show description"
               >
-                ▲
+                <ArrowUpCircle size={32}/>
+               
               </div>
             </div>
           </div>
@@ -169,12 +171,12 @@ const ScanArtwork = () => {
         {showDescription && (
           <div className="desc-card">
             <div className="buttons-bar">
-              <div onClick={toggleVoice}>{isPaused ? "▶" : "⏸"}</div>
+              <div onClick={toggleVoice}>{isPaused ? <PlayCircle size={32}/> : <PauseCircle size={32}/>}</div>
               <div
                 onClick={() => setShowDescription(false)}
                 title="Hide description"
               >
-                ▼
+                <ArrowDownCircle size={32}/>
               </div>
             </div>
             <h3>{title}</h3>

@@ -49,7 +49,7 @@ const Home = () => {
             cursor: "pointer",
           }}
         >
-          Play
+          Scan
         </button>
         <button
           onClick={() => navigate("/exhibitions")}

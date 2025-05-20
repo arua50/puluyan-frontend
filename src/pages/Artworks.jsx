@@ -7,28 +7,42 @@ const Artworks = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Helper: construct full image URL or fallback
+  const getImageUrl = (imageData) => {
+    if (imageData?.data?.url) {
+      return `https://puluyanartgallery.onrender.com${imageData.data.url}`;
+    }
+    return "https://via.placeholder.com/400x300?text=No+Image";
+  };
+
   useEffect(() => {
     const fetchArtworks = async () => {
       try {
         const response = await fetch(
           `https://puluyanartgallery.onrender.com/api/artworks?filters[exhibition][id][$eq]=${id}&populate=*`
         );
-        const json = await response.json();
-        console.log("Fetched artworks:", json);
 
-        const simplified = json.data.map((item) => ({
-          id: item.id,
-          title: item?.art_title || "Untitled",
-          artist: item?.artist?.data?.name || "Unknown Artist",
-          image: item?.art_image?.data?.url
-            ? `https://puluyanartgallery.onrender.com${item.art_image.data.url}`
-            : "https://via.placeholder.com/400x300?text=No+Image",
-        }));
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const json = await response.json();
+        console.log("Fetched artworks full JSON:", JSON.stringify(json, null, 2));
+
+        const simplified = json.data.map((item) => {
+          const attrs = item;
+          return {
+            id: item.id,
+            title: attrs.art_title || "Untitled",
+            artist: attrs.artist || "Unknown Artist",
+            image: getImageUrl(attrs.art_image),
+          };
+        });
 
         setArtworks(simplified);
       } catch (err) {
         console.error("Error fetching artworks:", err);
-        setError("Failed to load artworks.");
+        setError("Failed to load artworks. Please try again later.");
       } finally {
         setLoading(false);
       }
@@ -37,53 +51,65 @@ const Artworks = () => {
     fetchArtworks();
   }, [id]);
 
-  if (loading) return <p style={{ textAlign: "center" }}>Loading...</p>;
-  if (error)
-    return <p style={{ textAlign: "center", color: "red" }}>{error}</p>;
+  if (loading) {
+    return <p style={{ textAlign: "center", fontSize: "18px" }}>Loading artworks...</p>;
+  }
+
+  if (error) {
+    return <p style={{ textAlign: "center", color: "red", fontSize: "18px" }}>{error}</p>;
+  }
 
   return (
     <div style={{ padding: "24px", maxWidth: "960px", margin: "0 auto" }}>
       <h1
         style={{
-          fontSize: "24px",
+          fontSize: "28px",
           fontWeight: "bold",
           textAlign: "center",
-          marginBottom: "20px",
+          marginBottom: "24px",
         }}
       >
         Artworks in Exhibition
       </h1>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-          gap: "16px",
-        }}
-      >
-        {artworks.map((artwork) => (
-          <div
-            key={artwork.id}
-            style={{
-              borderRadius: "8px",
-              boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
-              backgroundColor: "#fff",
-              overflow: "hidden",
-            }}
-          >
-            <img
-              src={artwork.image}
-              alt={artwork.title}
-              style={{ width: "100%", height: "200px", objectFit: "cover" }}
-            />
-            <div style={{ padding: "16px" }}>
-              <h2 style={{ fontSize: "18px", fontWeight: "600", marginBottom: "8px" }}>
-                {artwork.title}
-              </h2>
-              <p style={{ color: "#666" }}>By {artwork.artist}</p>
+
+      {artworks.length === 0 ? (
+        <p style={{ textAlign: "center", fontSize: "16px", color: "#666" }}>
+          No artworks found for this exhibition.
+        </p>
+      ) : (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+            gap: "20px",
+          }}
+        >
+          {artworks.map((artwork) => (
+            <div
+              key={artwork.id}
+              style={{
+                borderRadius: "10px",
+                boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
+                backgroundColor: "#fff",
+                overflow: "hidden",
+                transition: "transform 0.2s ease-in-out",
+              }}
+            >
+              <img
+                src={artwork.image}
+                alt={artwork.title || "Artwork"}
+                style={{ width: "100%", height: "200px", objectFit: "cover" }}
+              />
+              <div style={{ padding: "16px" }}>
+                <h2 style={{ fontSize: "18px", fontWeight: "600", marginBottom: "8px" }}>
+                  {artwork.title}
+                </h2>
+                <p style={{ color: "#666" }}>By {artwork.artist}</p>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

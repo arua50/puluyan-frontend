@@ -12,6 +12,7 @@ import "./index.css";
 
 export default function App() {
   return (
+    
     <Router>
       <Routes>
         {/* ─── 1. HOME — no header ───────────────────────── */}
