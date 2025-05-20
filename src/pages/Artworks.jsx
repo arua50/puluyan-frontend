@@ -20,8 +20,8 @@ const Artworks = () => {
           id: item.id,
           title: item?.art_title || "Untitled",
           artist: item?.artist?.data?.name || "Unknown Artist",
-          image: item?.coverImage?.data?.url
-            ? `https://puluyanartgallery.onrender.com${item.coverImage.data.url}`
+          image: item?.art_image?.data?.url
+            ? `https://puluyanartgallery.onrender.com${item.art_image.data.url}`
             : "https://via.placeholder.com/400x300?text=No+Image",
         }));
 

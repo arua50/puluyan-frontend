@@ -9,7 +9,7 @@ const Exhibitions = () => {
     const fetchExhibitions = async () => {
       try {
         const response = await fetch(
-          "https://puluyanartgallery.onrender.com/api/exhibitions"
+          "https://puluyanartgallery.onrender.com/api/exhibitions?populate=coverImage"
         );
         const json = await response.json();
         console.log("Fetched exhibitions:", json);
@@ -27,12 +27,12 @@ const Exhibitions = () => {
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4 text-center">Exhibitions</h1>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div>
+      <h1>Exhibitions</h1>
+      <div>
         
         {exhibitions.map((exhibition) => {
-          const { id, exb_title, startDate, endDate } = exhibition;
+          const { id, exb_title, startDate, endDate} = exhibition;
 
           return (
             <div
@@ -41,12 +41,12 @@ const Exhibitions = () => {
               onClick={() => handleExhibitionClick(id)}
             >
               <img
-                src="https://via.placeholder.com/400x200?text=No+Image"
-                alt={exb_title}
-                className="w-full h-48 object-cover opacity-80"
+                src="/uploads/large_s_558cedc009.jpg"
+                
+              
               />
-              <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-60 p-3 text-white">
-                <h2 className="text-lg font-semibold">{exb_title}</h2>
+              <div>
+                <h2 >{exb_title}</h2>
                 <p className="text-sm">
                   {startDate} – {endDate}
                 </p>

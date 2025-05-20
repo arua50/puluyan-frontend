@@ -31,36 +31,7 @@ html,
   display: block;
 }
 
-/* ──────────────────────────────────────────────────────────
-   1.  SCANNING OVERLAY
-   ────────────────────────────────────────────────────────── */
-.frame-lines {
-  --line: 4px;
-  --size: 48px;
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
 
-/* four pink corners */
-.frame-lines::before,
-.frame-lines::after,
-.frame-lines .bl,
-.frame-lines .tr {
-  content: "";
-  position: absolute;
-  width: var(--size);
-  height: var(--size);
-  border: var(--line) solid #ff2d86;
-}
-/* top-left */
-.frame-lines::before { top: 0; left: 0; border-right: none; border-bottom: none; }
-/* bottom-right */
-.frame-lines::after  { bottom: 0; right: 0; border-left: none; border-top: none; }
-/* bottom-left */
-.frame-lines .bl     { bottom: 0; left: 0; border-right: none; border-top: none; }
-/* top-right */
-.frame-lines .tr     { top: 0; right: 0; border-left: none; border-bottom: none; }
 
 /* white logo top-right while scanning */
 .scan-logo {
@@ -74,6 +45,8 @@ html,
   color: #fff;
   text-shadow: 0 1px 4px rgba(0,0,0,.65);
 }
+
+
 
 /* ──────────────────────────────────────────────────────────
    2.  CAMERA-FLIP BUTTON

@@ -1,0 +1,56 @@
+/* ─────────────────────────────────────────────
+   GLOBAL LAYOUT HELPERS
+   ───────────────────────────────────────────── */
+
+/* Everything that should sit *below* the header
+   gets this padding so it is not hidden */
+body, .page-shell {
+  padding-top: 56px;           /* = header height */
+}
+
+/* If your scan page already had .scan-wrapper,
+   keep it relative so absolute overlays work */
+.scan-wrapper { position: relative; }
+
+/* ─────────────────────────────────────────────
+   HEADER BAR (shared on all non-home pages)
+   ───────────────────────────────────────────── */
+.scan-header {
+  position: fixed;             /* pin to viewport */
+  inset: 0 0 auto 0;           /* top:0; left:0; right:0 */
+  height: 56px;
+  z-index: 999;                /* on top of everything */
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1rem;
+
+  background: rgba(50, 46, 46, 0.7);   /* dark glass */
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* ── Left-side Home button ─────────────────── */
+.home-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  color: #fff;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.home-btn:hover { opacity: 0.8; }
+
+/* ── Right-side Logo image ─────────────────── */
+.header-logo {
+  width: 150px;       /* base size */
+  max-width: 40vw;    /* shrink gracefully on tiny phones */
+}
+@media (min-width: 600px) {
+  .header-logo { width: 200px; }
+}

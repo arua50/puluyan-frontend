@@ -137,7 +137,7 @@ const ScanArtwork = () => {
               <div className="bl" />
               <div className="tr" />
             </div>
-            <span className="scan-logo">PULUY·AN</span>
+            
 
             {/* NEW ▸ camera-flip button (only while scanning) */}
             <button

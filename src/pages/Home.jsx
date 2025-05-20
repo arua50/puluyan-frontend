@@ -17,14 +17,16 @@ const Home = () => {
       }}
     >
       {/* Logo */}
-      <img
-        src="/logo.png" // Make sure this path is correct
-        alt="Puluy-an Logo"
-        style={{
-          width: "180px",
-          marginBottom: "3rem",
-        }}
-      />
+   <img
+  src="/logo.png"
+  alt="Puluy-an Logo"
+  style={{               // JSX style object
+    width: 400,          // pixels — increase as needed
+    maxWidth: "90%",     // optional: don’t overflow small screens
+    marginBottom: "0rem"
+  }}
+/>
+
 
       {/* Buttons */}
       <div
