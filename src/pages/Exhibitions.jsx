@@ -6,7 +6,7 @@ export default function ExhibitionsList() {
 
   // Change this to your Strapi backend URL
   const API_URL = "https://puluyanartgallery.onrender.com";
-  const ENDPOINT = `${API_URL}/api/exhibitions?populate=coverImage`;
+  const ENDPOINT = "https://puluyanartgallery.onrender.com/api/exhibitions?populate=coverImage";
 
   useEffect(() => {
     const fetchExhibitions = async () => {
