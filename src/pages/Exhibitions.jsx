@@ -1,62 +1,81 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import "./Exhibitions.css";
 
-const API_URL = "https://puluyanartgallery.onrender.com/api/exhibitions?populate=coverImage";
-const BASE_URL = "https://puluyanartgallery.onrender.com";
-
-const Exhibitions = () => {
+export default function ExhibitionsList() {
   const [exhibitions, setExhibitions] = useState([]);
-  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // Change this to your Strapi backend URL
+  const API_URL = "https://puluyanartgallery.onrender.com";
+  const ENDPOINT = `${API_URL}/api/exhibitions?populate=coverImage`;
 
   useEffect(() => {
     const fetchExhibitions = async () => {
       try {
-        const res = await fetch(
-          "https://puluyanartgallery.onrender.com/api/exhibitions?populate=coverImage"
-        );
-        const data = await res.json();
+        const res = await fetch(ENDPOINT);
+        const json = await res.json();
 
-        console.log("Full API Response:", data);
+        const simplified = json.data.map((item) => {
+          const attrs = item.attributes;
+          const imageData = attrs.coverImage?.data?.attributes;
 
-        // Extract the exhibitions array
-        const exhibitionsList = data.data || [];
-        setExhibitions(exhibitionsList);
+          let imageUrl =
+            "https://via.placeholder.com/400x300?text=No+Image"; // default
+
+          if (imageData) {
+            if (imageData.formats?.medium?.url) {
+              imageUrl = imageData.formats.medium.url;
+            } else if (imageData.url) {
+              imageUrl = imageData.url;
+            }
+
+            // If the URL is relative (local storage), prepend API_URL
+            if (imageUrl && !imageUrl.startsWith("http")) {
+              imageUrl = `${API_URL}${imageUrl}`;
+            }
+          }
+
+          return {
+            id: item.id,
+            exb_title: attrs.exb_title || "Untitled Exhibition",
+            startDate: attrs.startDate || "Unknown",
+            endDate: attrs.endDate || "Unknown",
+            imageUrl,
+          };
+        });
+
+        setExhibitions(simplified);
       } catch (err) {
-        setError(err.message);
         console.error("Error fetching exhibitions:", err);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchExhibitions();
   }, []);
 
-  if (error) return <p>Error: {error}</p>;
-  if (!exhibitions.length) return <p>No exhibitions found</p>;
+  if (loading) return <p>Loading exhibitions...</p>;
 
   return (
-    <div>
-      <h1>Exhibitions</h1>
-      {exhibitions.map((item) => {
-        const attrs = item.attributes;
-        const imageUrl =
-          attrs.coverImage?.data?.attributes?.url
-            ? `https://puluyanartgallery.onrender.com${attrs.coverImage.data.attributes.url}`
-            : null;
-
-        return (
-          <div key={item.id}>
-            <h2>{attrs.title}</h2>
-            {imageUrl ? (
-              <img src={imageUrl} alt={attrs.title} width="300" />
-            ) : (
-              <p>No image available</p>
-            )}
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
+      {exhibitions.map((exhibition) => (
+        <div
+          key={exhibition.id}
+          className="border rounded-lg shadow-md overflow-hidden"
+        >
+          <img
+            src={exhibition.imageUrl}
+            alt={exhibition.exb_title}
+            className="w-full h-48 object-cover"
+          />
+          <div className="p-4">
+            <h2 className="text-lg font-bold">{exhibition.exb_title}</h2>
+            <p className="text-sm text-gray-500">
+              {exhibition.startDate} – {exhibition.endDate}
+            </p>
           </div>
-        );
-      })}
+        </div>
+      ))}
     </div>
   );
-};
-
-export default Exhibitions;
+}
