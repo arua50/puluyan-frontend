@@ -4,22 +4,34 @@ export default function ExhibitionsList() {
   const [exhibitions, setExhibitions] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Change this to your Strapi backend URL
+  // ✅ Your backend base URL
   const API_URL = "https://puluyanartgallery.onrender.com";
-  const ENDPOINT = "https://puluyanartgallery.onrender.com/api/exhibitions?populate=coverImage";
+  
+  // ✅ Make sure this matches your Strapi API ID exactly
+  const ENDPOINT = `${API_URL}/api/exhibitions?populate=coverImage`;
 
   useEffect(() => {
     const fetchExhibitions = async () => {
       try {
         const res = await fetch(ENDPOINT);
+
+        if (!res.ok) {
+          throw new Error(`HTTP error! Status: ${res.status}`);
+        }
+
         const json = await res.json();
 
+        if (!json.data || json.data.length === 0) {
+          console.warn("No exhibitions found");
+          setExhibitions([]);
+          return;
+        }
+
         const simplified = json.data.map((item) => {
-          const attrs = item.attributes;
+          const attrs = item.attributes || {};
           const imageData = attrs.coverImage?.data?.attributes;
 
-          let imageUrl =
-            "https://via.placeholder.com/400x300?text=No+Image"; // default
+          let imageUrl = "https://via.placeholder.com/400x300?text=No+Image"; // default
 
           if (imageData) {
             if (imageData.formats?.medium?.url) {
@@ -28,7 +40,6 @@ export default function ExhibitionsList() {
               imageUrl = imageData.url;
             }
 
-            // If the URL is relative (local storage), prepend API_URL
             if (imageUrl && !imageUrl.startsWith("http")) {
               imageUrl = `${API_URL}${imageUrl}`;
             }
@@ -52,7 +63,7 @@ export default function ExhibitionsList() {
     };
 
     fetchExhibitions();
-  }, []);
+  }, [ENDPOINT]);
 
   if (loading) return <p>Loading exhibitions...</p>;
 
