@@ -1,92 +1,79 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import "./Exhibitions.css";
 
-export default function ExhibitionsList() {
+const API_URL = "https://puluyanartgallery.onrender.com/api/exhibitions?populate=coverImage";
+const BASE_URL = "https://puluyanartgallery.onrender.com/api/exhibitions?populate=coverImage";
+
+const Exhibitions = () => {
   const [exhibitions, setExhibitions] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  // ✅ Your backend base URL
-  const API_URL = "https://puluyanartgallery.onrender.com";
-  
-  // ✅ Make sure this matches your Strapi API ID exactly
-  const ENDPOINT = `${API_URL}/api/exhibitions?populate=coverImage`;
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchExhibitions = async () => {
       try {
-        const res = await fetch(ENDPOINT);
-
-        if (!res.ok) {
-          throw new Error(`HTTP error! Status: ${res.status}`);
-        }
-
-        const json = await res.json();
-
-        if (!json.data || json.data.length === 0) {
-          console.warn("No exhibitions found");
-          setExhibitions([]);
-          return;
-        }
+        const response = await fetch(API_URL);
+        const json = await response.json();
 
         const simplified = json.data.map((item) => {
-          const attrs = item.attributes || {};
-          const imageData = attrs.coverImage?.data?.attributes;
+  const image = item.coverImage;
 
-          let imageUrl = "https://via.placeholder.com/400x300?text=No+Image"; // default
+  let imageUrl = "https://via.placeholder.com/400x300?text=No+Image";
 
-          if (imageData) {
-            if (imageData.formats?.medium?.url) {
-              imageUrl = imageData.formats.medium.url;
-            } else if (imageData.url) {
-              imageUrl = imageData.url;
-            }
+  if (image && image.formats && image.formats.medium?.url) {
+    imageUrl = `${BASE_URL}${image.formats.medium.url}`;
+  } else if (image?.url) {
+    imageUrl = `${BASE_URL}${image.url}`;
+  }
 
-            if (imageUrl && !imageUrl.startsWith("http")) {
-              imageUrl = `${API_URL}${imageUrl}`;
-            }
-          }
+  return {
+    id: item.id,
+    exb_title: item.exb_title || "Untitled Exhibition",
+    startDate: item.startDate || "Unknown",
+    endDate: item.endDate || "Unknown",
+    imageUrl,
+  };
+});
 
-          return {
-            id: item.id,
-            exb_title: attrs.exb_title || "Untitled Exhibition",
-            startDate: attrs.startDate || "Unknown",
-            endDate: attrs.endDate || "Unknown",
-            imageUrl,
-          };
-        });
 
         setExhibitions(simplified);
-      } catch (err) {
-        console.error("Error fetching exhibitions:", err);
-      } finally {
-        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching exhibitions:", error);
       }
     };
 
     fetchExhibitions();
-  }, [ENDPOINT]);
+  }, []);
 
-  if (loading) return <p>Loading exhibitions...</p>;
+  const handleExhibitionClick = (id) => {
+    navigate(`/exhibitions/${id}`);
+  };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
-      {exhibitions.map((exhibition) => (
-        <div
-          key={exhibition.id}
-          className="border rounded-lg shadow-md overflow-hidden"
-        >
-          <img
-            src={exhibition.imageUrl}
-            alt={exhibition.exb_title}
-            className="w-full h-48 object-cover"
-          />
-          <div className="p-4">
-            <h2 className="text-lg font-bold">{exhibition.exb_title}</h2>
-            <p className="text-sm text-gray-500">
-              {exhibition.startDate} – {exhibition.endDate}
-            </p>
+    <div className="exhibitions-container">
+      <div className="exhibitions-list">
+        {exhibitions.map((exhibition) => (
+          <div
+            key={exhibition.id}
+            className="exhibition-card"
+            onClick={() => handleExhibitionClick(exhibition.id)}
+          >
+            <img
+              src={exhibition.imageUrl}
+              alt={exhibition.exb_title}
+              className="exhibition-image"
+            />
+            <div className="exhibition-overlay">
+              <h2 className="exhibition-title">{exhibition.exb_title}</h2>
+              <p className="exhibition-dates">
+                {exhibition.startDate} – {exhibition.endDate}
+              </p>
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
-}
+};
+
+export default Exhibitions;
