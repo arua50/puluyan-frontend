@@ -13,7 +13,7 @@ const Exhibitions = () => {
     const fetchExhibitions = async () => {
       try {
         const res = await fetch(
-          "http://localhost:1337/api/exhibitions?populate=coverImage"
+          "https://puluyanartgallery.onrender.com/api/exhibitions?populate=coverImage"
         );
         const data = await res.json();
 
@@ -41,7 +41,7 @@ const Exhibitions = () => {
         const attrs = item.attributes;
         const imageUrl =
           attrs.coverImage?.data?.attributes?.url
-            ? `http://localhost:1337${attrs.coverImage.data.attributes.url}`
+            ? `https://puluyanartgallery.onrender.com${attrs.coverImage.data.attributes.url}`
             : null;
 
         return (
