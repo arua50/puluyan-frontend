@@ -7,71 +7,54 @@ const BASE_URL = "https://puluyanartgallery.onrender.com";
 
 const Exhibitions = () => {
   const [exhibitions, setExhibitions] = useState([]);
-  const navigate = useNavigate();
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchExhibitions = async () => {
       try {
-        const response = await fetch(API_URL);
-        const json = await response.json();
+        const res = await fetch(
+          "http://localhost:1337/api/exhibitions?populate=coverImage"
+        );
+        const data = await res.json();
 
-        const simplified = json.data.map((item) => {
-  const image = item.coverImage;
+        console.log("Full API Response:", data);
 
-  let imageUrl = "https://via.placeholder.com/400x300?text=No+Image";
-
-  if (image && image.formats && image.formats.medium?.url) {
-    imageUrl = `${BASE_URL}${image.formats.medium.url}`;
-  } else if (image?.url) {
-    imageUrl = `${BASE_URL}${image.url}`;
-  }
-
-  return {
-    id: item.id,
-    exb_title: item.exb_title || "Untitled Exhibition",
-    startDate: item.startDate || "Unknown",
-    endDate: item.endDate || "Unknown",
-    imageUrl,
-  };
-});
-
-
-        setExhibitions(simplified);
-      } catch (error) {
-        console.error("Error fetching exhibitions:", error);
+        // Extract the exhibitions array
+        const exhibitionsList = data.data || [];
+        setExhibitions(exhibitionsList);
+      } catch (err) {
+        setError(err.message);
+        console.error("Error fetching exhibitions:", err);
       }
     };
 
     fetchExhibitions();
   }, []);
 
-  const handleExhibitionClick = (id) => {
-    navigate(`/exhibitions/${id}`);
-  };
+  if (error) return <p>Error: {error}</p>;
+  if (!exhibitions.length) return <p>No exhibitions found</p>;
 
   return (
-    <div className="exhibitions-container">
-      <div className="exhibitions-list">
-        {exhibitions.map((exhibition) => (
-          <div
-            key={exhibition.id}
-            className="exhibition-card"
-            onClick={() => handleExhibitionClick(exhibition.id)}
-          >
-            <img
-              src={exhibition.imageUrl}
-              alt={exhibition.exb_title}
-              className="exhibition-image"
-            />
-            <div className="exhibition-overlay">
-              <h2 className="exhibition-title">{exhibition.exb_title}</h2>
-              <p className="exhibition-dates">
-                {exhibition.startDate} – {exhibition.endDate}
-              </p>
-            </div>
+    <div>
+      <h1>Exhibitions</h1>
+      {exhibitions.map((item) => {
+        const attrs = item.attributes;
+        const imageUrl =
+          attrs.coverImage?.data?.attributes?.url
+            ? `http://localhost:1337${attrs.coverImage.data.attributes.url}`
+            : null;
+
+        return (
+          <div key={item.id}>
+            <h2>{attrs.title}</h2>
+            {imageUrl ? (
+              <img src={imageUrl} alt={attrs.title} width="300" />
+            ) : (
+              <p>No image available</p>
+            )}
           </div>
-        ))}
-      </div>
+        );
+      })}
     </div>
   );
 };
