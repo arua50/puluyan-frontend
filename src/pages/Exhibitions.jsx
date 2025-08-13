@@ -12,18 +12,17 @@ const Exhibitions = () => {
   useEffect(() => {
     const fetchExhibitions = async () => {
       try {
-        // ✅ Fetch from BASE_URL so Strapi returns exhibitions + coverImage
         const response = await fetch(BASE_URL);
         const json = await response.json();
 
         const simplified = json.data.map((item) => {
-          const image = item.coverImage;
+          const attrs = item.attributes || {};
+          const image = attrs.coverImage?.data?.attributes;
 
-          // Default placeholder image
+          // Default placeholder
           let imageUrl = "https://via.placeholder.com/400x300?text=No+Image";
 
-          // ✅ Correct image URL building
-          if (image && image.formats && image.formats.medium?.url) {
+          if (image?.formats?.medium?.url) {
             imageUrl = `${API_URL}${image.formats.medium.url}`;
           } else if (image?.url) {
             imageUrl = `${API_URL}${image.url}`;
@@ -31,9 +30,9 @@ const Exhibitions = () => {
 
           return {
             id: item.id,
-            exb_title: item.exb_title || "Untitled Exhibition",
-            startDate: item.startDate || "Unknown",
-            endDate: item.endDate || "Unknown",
+            exb_title: attrs.exb_title || "Untitled Exhibition",
+            startDate: attrs.startDate || "Unknown",
+            endDate: attrs.endDate || "Unknown",
             imageUrl,
           };
         });
