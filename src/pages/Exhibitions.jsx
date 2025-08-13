@@ -15,11 +15,13 @@ const Exhibitions = () => {
         const response = await fetch(BASE_URL);
         const json = await response.json();
 
+        // 🔍 Debug: See the full API response in the browser console
+        console.log("API Response:", json);
+
         const simplified = json.data.map((item) => {
           const attrs = item.attributes || {};
           const image = attrs.coverImage?.data?.attributes;
 
-          // Default placeholder
           let imageUrl = "https://via.placeholder.com/400x300?text=No+Image";
 
           if (image?.formats?.medium?.url) {
