@@ -2,8 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Exhibitions.css";
 
-const API_URL = "https://puluyanartgallery.onrender.com/api/exhibitions?populate=coverImage";
-const BASE_URL = "https://puluyanartgallery.onrender.com";
+const API_URL = "https://puluyanartgallery.onrender.com";
+const BASE_URL = `${API_URL}/api/exhibitions?populate=coverImage`;
 
 const Exhibitions = () => {
   const [exhibitions, setExhibitions] = useState([]);
@@ -12,29 +12,31 @@ const Exhibitions = () => {
   useEffect(() => {
     const fetchExhibitions = async () => {
       try {
-        const response = await fetch(API_URL);
+        // ✅ Fetch from BASE_URL so Strapi returns exhibitions + coverImage
+        const response = await fetch(BASE_URL);
         const json = await response.json();
 
         const simplified = json.data.map((item) => {
-  const image = item.coverImage;
+          const image = item.coverImage;
 
-  let imageUrl = "https://via.placeholder.com/400x300?text=No+Image";
+          // Default placeholder image
+          let imageUrl = "https://via.placeholder.com/400x300?text=No+Image";
 
-  if (image && image.formats && image.formats.medium?.url) {
-    imageUrl = `${BASE_URL}${image.formats.medium.url}`;
-  } else if (image?.url) {
-    imageUrl = `${BASE_URL}${image.url}`;
-  }
+          // ✅ Correct image URL building
+          if (image && image.formats && image.formats.medium?.url) {
+            imageUrl = `${API_URL}${image.formats.medium.url}`;
+          } else if (image?.url) {
+            imageUrl = `${API_URL}${image.url}`;
+          }
 
-  return {
-    id: item.id,
-    exb_title: item.exb_title || "Untitled Exhibition",
-    startDate: item.startDate || "Unknown",
-    endDate: item.endDate || "Unknown",
-    imageUrl,
-  };
-});
-
+          return {
+            id: item.id,
+            exb_title: item.exb_title || "Untitled Exhibition",
+            startDate: item.startDate || "Unknown",
+            endDate: item.endDate || "Unknown",
+            imageUrl,
+          };
+        });
 
         setExhibitions(simplified);
       } catch (error) {
