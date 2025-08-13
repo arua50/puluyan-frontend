@@ -15,26 +15,26 @@ const Exhibitions = () => {
         const response = await fetch(BASE_URL);
         const json = await response.json();
 
-        // 🔍 Debug: See the full API response in the browser console
-        console.log("API Response:", json);
+        console.log("API Response:", json); // Debug
 
         const simplified = json.data.map((item) => {
-          const attrs = item.attributes || {};
-          const image = attrs.coverImage?.data?.attributes;
+          const image = item.coverImage;
 
+          // Default placeholder
           let imageUrl = "https://via.placeholder.com/400x300?text=No+Image";
 
+          // Use medium if available, else original
           if (image?.formats?.medium?.url) {
-            imageUrl = `${API_URL}${image.formats.medium.url}`;
+            imageUrl = image.formats.medium.url; // ✅ already full URL
           } else if (image?.url) {
-            imageUrl = `${API_URL}${image.url}`;
+            imageUrl = image.url; // ✅ already full URL
           }
 
           return {
             id: item.id,
-            exb_title: attrs.exb_title || "Untitled Exhibition",
-            startDate: attrs.startDate || "Unknown",
-            endDate: attrs.endDate || "Unknown",
+            exb_title: item.exb_title || "Untitled Exhibition",
+            startDate: item.startDate || "Unknown",
+            endDate: item.endDate || "Unknown",
             imageUrl,
           };
         });
