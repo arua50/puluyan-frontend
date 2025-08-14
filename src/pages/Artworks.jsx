@@ -7,10 +7,9 @@ const Artworks = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // ✅ Correctly read the image URL from Strapi's nested attributes
   const getImageUrl = (imageData) => {
-    if (imageData?.data?.attributes?.url) {
-      return `https://puluyanartgallery.onrender.com${imageData.data.attributes.url}`;
+    if (imageData?.data?.url) {
+      return `https://puluyanartgallery.onrender.com${imageData.data.url}`;
     }
     return "https://via.placeholder.com/400x300?text=No+Image";
   };
@@ -29,9 +28,8 @@ const Artworks = () => {
         const json = await response.json();
         console.log("Fetched artworks full JSON:", JSON.stringify(json, null, 2));
 
-        // ✅ Use item.attributes to correctly access Strapi fields
         const simplified = json.data.map((item) => {
-          const attrs = item.attributes;
+          const attrs = item;
           return {
             id: item.id,
             title: attrs.art_title || "Untitled",
@@ -43,7 +41,7 @@ const Artworks = () => {
         setArtworks(simplified);
       } catch (err) {
         console.error("Error fetching artworks:", err);
-        setError("Failed to load list of artworks. Please try again later.");
+        setError("Failed to load list artworks. Please try again later.");
       } finally {
         setLoading(false);
       }
