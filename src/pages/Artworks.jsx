@@ -1,54 +1,48 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 
-const Artworks = () => {
-  const { id } = useParams(); // Exhibition ID
-  const [artworks, setArtworks] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+const getImageUrl = (imageData) => {
+  const url = imageData?.data?.attributes?.url;
+  return url
+    ? `https://puluyanartgallery.onrender.com${url}`
+    : "https://via.placeholder.com/400x300?text=No+Image";
+};
 
-  const getImageUrl = (imageData) => {
-    if (imageData?.data?.url) {
-      return `https://puluyanartgallery.onrender.com${imageData.data.url}`;
+useEffect(() => {
+  const fetchArtworks = async () => {
+    try {
+      const response = await fetch(
+        `https://puluyanartgallery.onrender.com/api/artworks?filters[exhibition][id][$eq]=${id}&populate=*`
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const json = await response.json();
+      console.log("Fetched artworks full JSON:", JSON.stringify(json, null, 2));
+
+      const simplified = json.data.map((item) => {
+        const attrs = item.attributes; // ✅ correct place
+        return {
+          id: item.id,
+          title: attrs.art_title || "Untitled",
+          artist: attrs.artist || "Unknown Artist",
+          image: getImageUrl(attrs.art_image), // ✅ correct image path
+        };
+      });
+
+      setArtworks(simplified);
+    } catch (err) {
+      console.error("Error fetching artworks:", err);
+      setError("Failed to load list artworks. Please try again later.");
+    } finally {
+      setLoading(false);
     }
-    return "https://via.placeholder.com/400x300?text=No+Image";
   };
 
-  useEffect(() => {
-    const fetchArtworks = async () => {
-      try {
-        const response = await fetch(
-          `https://puluyanartgallery.onrender.com/api/artworks?filters[exhibition][id][$eq]=${id}&populate=*`
-        );
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-
-        const json = await response.json();
-        console.log("Fetched artworks full JSON:", JSON.stringify(json, null, 2));
-
-        const simplified = json.data.map((item) => {
-          const attrs = item;
-          return {
-            id: item.id,
-            title: attrs.art_title || "Untitled",
-            artist: attrs.artist || "Unknown Artist",
-            image: getImageUrl(attrs.art_image),
-          };
-        });
-
-        setArtworks(simplified);
-      } catch (err) {
-        console.error("Error fetching artworks:", err);
-        setError("Failed to load list artworks. Please try again later.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchArtworks();
-  }, [id]);
+  fetchArtworks();
+}, [id]);
 
   if (loading) {
     return <p style={{ textAlign: "center", fontSize: "18px" }}>Loading artworks...</p>;
@@ -109,6 +103,6 @@ const Artworks = () => {
       )}
     </div>
   );
-};
+
 
 export default Artworks;
