@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
 const Artworks = () => {
-  const { exhibitionId } = useParams(); // Get exhibition ID from the URL
+  const { id } = useParams(); // Get exhibition ID from the URL
   const [artworks, setArtworks] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -18,7 +18,7 @@ const Artworks = () => {
     const fetchArtworks = async () => {
       try {
         const res = await fetch(
-          `https://puluyanartgallery.onrender.com/api/artworks?filters[exhibition][id][$eq]=${exhibitionId}&populate=*`
+          `https://puluyanartgallery.onrender.com/api/artworks?filters[exhibition][id][$eq]=${id}&populate=*`
         );
 
         if (!res.ok) throw new Error("Failed to fetch artworks");
@@ -42,7 +42,7 @@ const Artworks = () => {
     };
 
     fetchArtworks();
-  }, [exhibitionId]);
+  }, [id]);
 
   if (loading) return <p>Loading artworks...</p>;
   if (!artworks.length) return <p>No artworks found for this exhibition.</p>;
