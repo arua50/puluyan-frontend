@@ -1,39 +1,45 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
+const API_URL = "https://puluyanartgallery.onrender.com";
+
 const Artworks = () => {
-  const { id } = useParams(); // Get exhibition ID from the URL
+  const { id } = useParams(); // from /exhibitions/:id
   const [artworks, setArtworks] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  // Helper function for image URLs
-  const getImageUrl = (imageData) => {
-    const url = imageData?.data?.attributes?.url;
-    return url
-      ? `https://puluyanartgallery.onrender.com${url}`
-      : "https://via.placeholder.com/400x300?text=No+Image";
-  };
 
   useEffect(() => {
     const fetchArtworks = async () => {
       try {
         const res = await fetch(
-          `https://puluyanartgallery.onrender.com/api/artworks?filters[exhibition][id][$eq]=${id}&populate=*`
+          `${API_URL}/api/artworks?filters[exhibition][id][$eq]=${id}&populate=art_image`
         );
 
         if (!res.ok) throw new Error("Failed to fetch artworks");
 
         const json = await res.json();
-        console.log("Fetched artworks JSON:", json);
+        console.log("Artworks API Response:", json);
 
-        const formatted = json.data.map((item) => ({
-          id: item.id,
-          title: item.attributes.art_title || "Untitled",
-          artist: item.attributes.artist || "Unknown Artist",
-          image: getImageUrl(item.attributes.art_image),
-        }));
+        const simplified = json.data.map((item) => {
+          const art = item.attributes;
+          const imgData = art.art_image?.data?.attributes;
 
-        setArtworks(formatted);
+          let imageUrl = "https://via.placeholder.com/400x300?text=No+Image";
+          if (imgData?.formats?.medium?.url) {
+            imageUrl = `${API_URL}${imgData.formats.medium.url}`;
+          } else if (imgData?.url) {
+            imageUrl = `${API_URL}${imgData.url}`;
+          }
+
+          return {
+            id: item.id,
+            title: art.art_title || "Untitled Artwork",
+            artist: art.artist || "Unknown Artist",
+            imageUrl,
+          };
+        });
+
+        setArtworks(simplified);
       } catch (err) {
         console.error("Error fetching artworks:", err);
       } finally {
@@ -41,7 +47,7 @@ const Artworks = () => {
       }
     };
 
-    fetchArtworks();
+    if (id) fetchArtworks();
   }, [id]);
 
   if (loading) return <p>Loading artworks...</p>;
@@ -67,7 +73,7 @@ const Artworks = () => {
             }}
           >
             <img
-              src={art.image}
+              src={art.imageUrl}
               alt={art.title}
               style={{ width: "100%", height: "200px", objectFit: "cover" }}
             />
