@@ -41,7 +41,7 @@ const Artworks = () => {
         setArtworks(simplified);
       } catch (err) {
         console.error("Error fetching artworks:", err);
-        setError("Failed to load artworks. Please try again later.");
+        setError("Failed to load list artworks. Please try again later.");
       } finally {
         setLoading(false);
       }
