@@ -1,35 +1,41 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 
+const API_URL = "https://puluyanartgallery.onrender.com";
+
 const Artworks = () => {
   const { id } = useParams(); // Exhibition ID
   const [artworks, setArtworks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const getImageUrl = (imageData) => {
-    if (imageData?.data?.url) {
-      return `https://puluyanartgallery.onrender.com${imageData.data.url}`;
+  // Safe for both Cloudinary (absolute) and local (relative) URLs
+  const getImageUrl = (media) => {
+    const attrs = media?.data?.attributes;
+    if (!attrs) {
+      return "https://via.placeholder.com/400x300?text=No+Image";
     }
-    return "https://via.placeholder.com/400x300?text=No+Image";
+    const medium = attrs.formats?.medium?.url;
+    const url = medium || attrs.url;
+    if (!url) {
+      return "https://via.placeholder.com/400x300?text=No+Image";
+    }
+    return url.startsWith("http") ? url : `${API_URL}${url}`;
   };
 
   useEffect(() => {
     const fetchArtworks = async () => {
       try {
-        const response = await fetch(
-          `https://puluyanartgallery.onrender.com/api/artworks?filters[exhibition][id][$eq]=${id}&populate=*`
+        const res = await fetch(
+          `${API_URL}/api/artworks?filters[exhibition][id][$eq]=${id}&populate=*`
         );
+        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
+        const json = await res.json();
+        console.log("Fetched artworks full JSON:", json);
 
-        const json = await response.json();
-        console.log("Fetched artworks full JSON:", JSON.stringify(json, null, 2));
-
-        const simplified = json.data.map((item) => {
-          const attrs = item;
+        const simplified = (json.data || []).map((item) => {
+          const attrs = item.attributes || {};
           return {
             id: item.id,
             title: attrs.art_title || "Untitled",
@@ -41,7 +47,7 @@ const Artworks = () => {
         setArtworks(simplified);
       } catch (err) {
         console.error("Error fetching artworks:", err);
-        setError("Failed to load list artworks. Please try again later.");
+        setError("Failed to load artworks. Please try again later.");
       } finally {
         setLoading(false);
       }
