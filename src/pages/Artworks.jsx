@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
 const Artworks = () => {
-  const { id } = useParams(); // Exhibition ID
+  const { exhibitionId } = useParams(); // Get exhibition ID from the URL
   const [artworks, setArtworks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
+  // Helper function for image URLs
   const getImageUrl = (imageData) => {
     const url = imageData?.data?.attributes?.url;
     return url
@@ -17,102 +17,69 @@ const Artworks = () => {
   useEffect(() => {
     const fetchArtworks = async () => {
       try {
-        const response = await fetch(
-          `https://puluyanartgallery.onrender.com/api/artworks?filters[exhibition][id][$eq]=${id}&populate=*`
+        const res = await fetch(
+          `https://puluyanartgallery.onrender.com/api/artworks?filters[exhibition][id][$eq]=${exhibitionId}&populate=*`
         );
 
-        if (response.status === 403) {
-          throw new Error(
-            "Access denied (403). Check Strapi public permissions for 'artworks'."
-          );
-        }
+        if (!res.ok) throw new Error("Failed to fetch artworks");
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-
-        const json = await response.json();
+        const json = await res.json();
         console.log("Fetched artworks JSON:", json);
 
-        const simplified = (json.data || []).map((item) => {
-          const attrs = item.attributes || {};
-          return {
-            id: item.id,
-            title: attrs.art_title || "Untitled",
-            artist: attrs.artist || "Unknown Artist",
-            image: getImageUrl(attrs.art_image),
-          };
-        });
+        const formatted = json.data.map((item) => ({
+          id: item.id,
+          title: item.attributes.art_title || "Untitled",
+          artist: item.attributes.artist || "Unknown Artist",
+          image: getImageUrl(item.attributes.art_image),
+        }));
 
-        setArtworks(simplified);
+        setArtworks(formatted);
       } catch (err) {
         console.error("Error fetching artworks:", err);
-        setError(err.message || "Failed to load artworks.");
       } finally {
         setLoading(false);
       }
     };
 
     fetchArtworks();
-  }, [id]);
+  }, [exhibitionId]);
 
-  if (loading) {
-    return <p style={{ textAlign: "center", fontSize: "18px" }}>Loading artworks...</p>;
-  }
-
-  if (error) {
-    return <p style={{ textAlign: "center", color: "red", fontSize: "18px" }}>{error}</p>;
-  }
+  if (loading) return <p>Loading artworks...</p>;
+  if (!artworks.length) return <p>No artworks found for this exhibition.</p>;
 
   return (
-    <div style={{ padding: "24px", maxWidth: "960px", margin: "0 auto" }}>
-      <h1 style={{ fontSize: "28px", fontWeight: "bold", textAlign: "center", marginBottom: "24px" }}>
-        Artworks in Exhibition
-      </h1>
-
-      {artworks.length === 0 ? (
-        <p style={{ textAlign: "center", fontSize: "16px", color: "#666" }}>
-          No artworks found for this exhibition.
-        </p>
-      ) : (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-            gap: "20px",
-          }}
-        >
-          {artworks.map((artwork) => (
-            <Link
-              to={`/artwork/${artwork.id}`}
-              key={artwork.id}
-              style={{ textDecoration: "none", color: "inherit" }}
-            >
-              <div
-                style={{
-                  borderRadius: "10px",
-                  boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
-                  backgroundColor: "#fff",
-                  overflow: "hidden",
-                  transition: "transform 0.2s ease-in-out",
-                }}
-              >
-                <img
-                  src={artwork.image}
-                  alt={artwork.title}
-                  style={{ width: "100%", height: "200px", objectFit: "cover" }}
-                />
-                <div style={{ padding: "16px" }}>
-                  <h2 style={{ fontSize: "18px", fontWeight: "600", marginBottom: "8px" }}>
-                    {artwork.title}
-                  </h2>
-                  <p style={{ color: "#666" }}>By {artwork.artist}</p>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-      )}
+    <div style={{ padding: "20px" }}>
+      <h1>Artworks in this Exhibition</h1>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))",
+          gap: "16px",
+        }}
+      >
+        {artworks.map((art) => (
+          <div
+            key={art.id}
+            style={{
+              border: "1px solid #ddd",
+              borderRadius: "8px",
+              overflow: "hidden",
+            }}
+          >
+            <img
+              src={art.image}
+              alt={art.title}
+              style={{ width: "100%", height: "200px", objectFit: "cover" }}
+            />
+            <div style={{ padding: "10px" }}>
+              <h2 style={{ fontSize: "18px", marginBottom: "5px" }}>
+                {art.title}
+              </h2>
+              <p style={{ fontSize: "14px", color: "#555" }}>{art.artist}</p>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
