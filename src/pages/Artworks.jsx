@@ -1,48 +1,61 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 
-const getImageUrl = (imageData) => {
-  const url = imageData?.data?.attributes?.url;
-  return url
-    ? `https://puluyanartgallery.onrender.com${url}`
-    : "https://via.placeholder.com/400x300?text=No+Image";
-};
+const Artworks = () => {
+  const { id } = useParams(); // Exhibition ID from URL
+  const [artworks, setArtworks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-useEffect(() => {
-  const fetchArtworks = async () => {
-    try {
-      const response = await fetch(
-        `https://puluyanartgallery.onrender.com/api/artworks?filters[exhibition][id][$eq]=${id}&populate=*`
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-
-      const json = await response.json();
-      console.log("Fetched artworks full JSON:", JSON.stringify(json, null, 2));
-
-      const simplified = json.data.map((item) => {
-        const attrs = item.attributes; // ✅ correct place
-        return {
-          id: item.id,
-          title: attrs.art_title || "Untitled",
-          artist: attrs.artist || "Unknown Artist",
-          image: getImageUrl(attrs.art_image), // ✅ correct image path
-        };
-      });
-
-      setArtworks(simplified);
-    } catch (err) {
-      console.error("Error fetching artworks:", err);
-      setError("Failed to load list artworks. Please try again later.");
-    } finally {
-      setLoading(false);
-    }
+  // Function to get full image URL from Strapi
+  const getImageUrl = (imageData) => {
+    const url = imageData?.data?.attributes?.url;
+    return url
+      ? `https://puluyanartgallery.onrender.com${url}`
+      : "https://via.placeholder.com/400x300?text=No+Image";
   };
 
-  fetchArtworks();
-}, [id]);
+  useEffect(() => {
+    const fetchArtworks = async () => {
+      try {
+        const response = await fetch(
+          `https://puluyanartgallery.onrender.com/api/artworks?filters[exhibition][id][$eq]=${id}&populate=*`
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const json = await response.json();
+        console.log("Fetched artworks full JSON:", JSON.stringify(json, null, 2));
+
+        // Map artworks to simplified structure
+        const simplified = json.data.map((item) => {
+          const attrs = item.attributes;
+          return {
+            id: item.id,
+            title: attrs.art_title || "Untitled",
+            artist: attrs.artist || "Unknown Artist",
+            image: getImageUrl(attrs.art_image),
+          };
+        });
+
+        setArtworks(simplified);
+      } catch (err) {
+        console.error("Error fetching artworks:", err);
+        setError("Failed to load list artworks. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchArtworks();
+    } else {
+      setError("Invalid exhibition ID.");
+      setLoading(false);
+    }
+  }, [id]);
 
   if (loading) {
     return <p style={{ textAlign: "center", fontSize: "18px" }}>Loading artworks...</p>;
@@ -54,7 +67,14 @@ useEffect(() => {
 
   return (
     <div style={{ padding: "24px", maxWidth: "960px", margin: "0 auto" }}>
-      <h1 style={{ fontSize: "28px", fontWeight: "bold", textAlign: "center", marginBottom: "24px" }}>
+      <h1
+        style={{
+          fontSize: "28px",
+          fontWeight: "bold",
+          textAlign: "center",
+          marginBottom: "24px",
+        }}
+      >
         Artworks in Exhibition
       </h1>
 
@@ -103,6 +123,6 @@ useEffect(() => {
       )}
     </div>
   );
-
+};
 
 export default Artworks;
