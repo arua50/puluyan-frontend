@@ -2,17 +2,16 @@ import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 
 const Artworks = () => {
-  const { id } = useParams(); // Exhibition ID from URL
+  const { id } = useParams(); // Exhibition ID
   const [artworks, setArtworks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Function to get full image URL from Strapi
   const getImageUrl = (imageData) => {
-    const url = imageData?.data?.attributes?.url;
-    return url
-      ? `https://puluyanartgallery.onrender.com${url}`
-      : "https://via.placeholder.com/400x300?text=No+Image";
+    if (imageData?.data?.url) {
+      return `https://puluyanartgallery.onrender.com${imageData.data.url}`;
+    }
+    return "https://via.placeholder.com/400x300?text=No+Image";
   };
 
   useEffect(() => {
@@ -29,9 +28,8 @@ const Artworks = () => {
         const json = await response.json();
         console.log("Fetched artworks full JSON:", JSON.stringify(json, null, 2));
 
-        // Map artworks to simplified structure
         const simplified = json.data.map((item) => {
-          const attrs = item.attributes;
+          const attrs = item;
           return {
             id: item.id,
             title: attrs.art_title || "Untitled",
@@ -49,12 +47,7 @@ const Artworks = () => {
       }
     };
 
-    if (id) {
-      fetchArtworks();
-    } else {
-      setError("Invalid exhibition ID.");
-      setLoading(false);
-    }
+    fetchArtworks();
   }, [id]);
 
   if (loading) {
@@ -67,14 +60,7 @@ const Artworks = () => {
 
   return (
     <div style={{ padding: "24px", maxWidth: "960px", margin: "0 auto" }}>
-      <h1
-        style={{
-          fontSize: "28px",
-          fontWeight: "bold",
-          textAlign: "center",
-          marginBottom: "24px",
-        }}
-      >
+      <h1 style={{ fontSize: "28px", fontWeight: "bold", textAlign: "center", marginBottom: "24px" }}>
         Artworks in Exhibition
       </h1>
 
