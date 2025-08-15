@@ -7,13 +7,23 @@ const Artworks = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const getImageUrl = (imageData) => {
-    if (imageData?.data?.url) {
-      return `https://puluyanartgallery.onrender.com${imageData.data.url}`;
-    }
-    return "https://via.placeholder.com/400x300?text=No+Image";
-  };
+ const getImageUrl = (imageData) => {
+  const baseUrl = import.meta.env.VITE_API_URL || process.env.REACT_APP_API_URL || "";
 
+  const url = imageData?.data?.url || imageData?.url;
+
+  if (url) {
+    // If it's already a full URL (http/https), return as is
+    if (url.startsWith("http")) {
+      return url;
+    }
+    // If it's relative, attach base URL
+    return `${baseUrl}${url}`;
+  }
+
+  // Fallback placeholder
+  return "https://via.placeholder.com/400x300?text=No+Image";
+};
   useEffect(() => {
     const fetchArtworks = async () => {
       try {
