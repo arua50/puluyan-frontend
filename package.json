@@ -11,12 +11,15 @@
     "tailwind:init": "tailwindcss init -p"
   },
   "dependencies": {
+    "@react-three/drei": "^10.7.1",
+    "@react-three/fiber": "^9.3.0",
     "@teachablemachine/image": "^0.8.5",
     "lucide-react": "^0.511.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^6.30.0",
-    "react-webcam": "^7.2.0"
+    "react-webcam": "^7.2.0",
+    "three": "^0.179.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",
