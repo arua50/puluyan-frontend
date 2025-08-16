@@ -1,68 +1,73 @@
-import React, { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import React, { useEffect, useState, Suspense } from "react";
+import { useParams } from "react-router-dom";
+import { Canvas } from "@react-three/fiber";
+import { OrbitControls, Environment, useGLTF } from "@react-three/drei";
 
-const Artwork3DView = () => {
+const getFileUrl = (fileData) => {
+  const baseUrl =
+    import.meta.env.VITE_API_URL || process.env.REACT_APP_API_URL || "";
+  const url = fileData?.data?.url || fileData?.url;
+  if (!url) return null;
+  return url.startsWith("http") ? url : `${baseUrl}${url}`;
+};
+
+// Component to load the GLTF/GLB model
+function Model({ modelUrl }) {
+  const { scene } = useGLTF(modelUrl);
+  return <primitive object={scene} scale={1} />;
+}
+
+const Artwork3D = () => {
   const { id } = useParams();
   const [artwork, setArtwork] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const baseUrl = "https://puluyanartgallery.onrender.com";
-
   useEffect(() => {
     const fetchArtwork = async () => {
       try {
-        const res = await fetch(`${baseUrl}/api/artworks/${id}?populate=*`);
+        const res = await fetch(
+          `https://puluyanartgallery.onrender.com/api/artworks/${id}?populate=*`
+        );
         if (!res.ok) throw new Error("Failed to fetch artwork");
+
         const json = await res.json();
-        setArtwork(json.data || null);
+        const attrs = json.data;
+        setArtwork({
+          title: attrs.art_title,
+          artist: attrs.artist,
+          modelUrl: getFileUrl(attrs.art_3d_model), // assuming Strapi field is art_3d_model
+        });
       } catch (err) {
-        setError(err.message);
+        console.error(err);
+        setError("Could not load 3D artwork.");
       } finally {
         setLoading(false);
       }
     };
-
     fetchArtwork();
   }, [id]);
 
-  const getModelUrl = (modelData) => {
-    if (modelData?.data?.attributes?.url) {
-      return `${baseUrl}${modelData.data.attributes.url}`;
-    }
-    return null;
-  };
-
   if (loading) return <p style={{ textAlign: "center" }}>Loading 3D model...</p>;
   if (error) return <p style={{ textAlign: "center", color: "red" }}>{error}</p>;
-  if (!artwork) return <p style={{ textAlign: "center" }}>Artwork not found.</p>;
-
-  const title = artwork.attributes?.title || "Untitled";
-  const modelUrl = getModelUrl(artwork.attributes?.model_file);
+  if (!artwork?.modelUrl)
+    return <p style={{ textAlign: "center" }}>No 3D model available.</p>;
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h1>{title} — 3D View</h1>
-
-      {modelUrl ? (
-        <model-viewer
-          src={modelUrl}
-          alt={title}
-          auto-rotate
-          camera-controls
-          style={{ width: "100%", height: "500px", border: "1px solid #ccc" }}
-        ></model-viewer>
-      ) : (
-        <p>No 3D model available for this artwork.</p>
-      )}
-
-      <div style={{ marginTop: "20px" }}>
-        <Link to={`/artwork/${id}`} style={{ color: "blue" }}>
-          ← Back to Details
-        </Link>
-      </div>
+    <div style={{ height: "100vh", width: "100%" }}>
+      <h1 style={{ textAlign: "center", padding: "10px" }}>
+        {artwork.title} — {artwork.artist}
+      </h1>
+      <Canvas camera={{ position: [0, 0, 5], fov: 50 }}>
+        <ambientLight intensity={0.5} />
+        <Suspense fallback={null}>
+          <Model modelUrl={artwork.modelUrl} />
+          <Environment preset="studio" />
+          <OrbitControls />
+        </Suspense>
+      </Canvas>
     </div>
   );
 };
 
-export default Artwork3DView;
+export default Artwork3D;
