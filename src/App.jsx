@@ -7,8 +7,8 @@ import ScanArtwork  from "./pages/ScanArtwork";
 import Exhibitions  from "./pages/Exhibitions";
 import Artworks     from "./pages/Artworks";
 import AppLayout    from "./components/AppLayout";
-import ArtworkDetails from "./pages/ArtworkDetails"
-
+import ArtworkDetails from "./pages/ArtworkDetails";
+import Artwork3DView from "./pages/Artwork3DView";
 import "./index.css";
 
 export default function App() {
