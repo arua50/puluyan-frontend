@@ -22,7 +22,7 @@ const Artworks = () => {
   }
 
   // Fallback placeholder
-  return "https://via.placeholder.com/400x300?text=No+Image";
+  return "https://via.placeholder.com/300x300?text=No+Image";
 };
   useEffect(() => {
     const fetchArtworks = async () => {
@@ -71,7 +71,7 @@ const Artworks = () => {
   return (
     <div style={{ padding: "24px", maxWidth: "960px", margin: "0 auto" }}>
       <h1 style={{ fontSize: "28px", fontWeight: "bold", textAlign: "center", marginBottom: "24px" }}>
-        Artworks in Exhibition
+        Artworks
       </h1>
 
       {artworks.length === 0 ? (
