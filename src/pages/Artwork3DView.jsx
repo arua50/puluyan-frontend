@@ -36,7 +36,7 @@ const Artwork3D = () => {
         setArtwork({
           title: attrs.art_title,
           artist: attrs.artist,
-          modelUrl: getFileUrl(attrs.art_3d_model), // assuming Strapi field is art_3d_model
+          modelUrl: getFileUrl(attrs.model3D), // assuming Strapi field is art_3d_model
         });
       } catch (err) {
         console.error(err);
