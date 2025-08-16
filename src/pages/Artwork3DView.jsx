@@ -27,7 +27,7 @@ const Artwork3D = () => {
     const fetchArtwork = async () => {
       try {
         const res = await fetch(
-          `https://puluyanartgallery.onrender.com/api/artworks/${id}?populate=*`
+          `https://puluyanartgallery.onrender.com/api/artworks/${id}?populate[model3D]=*&populate[art_image]=*`
         );
         if (!res.ok) throw new Error("Failed to fetch artwork");
 
