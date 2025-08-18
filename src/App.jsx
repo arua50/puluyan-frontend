@@ -25,7 +25,7 @@ export default function App() {
           <Route path="/exhibitions"        element={<Exhibitions />} />
           <Route path="/exhibitions/:id"    element={<Artworks />}   />
           <Route path="/artwork/:id" element={<ArtworkDetails />} />
-          <Route path="/artwork-3d/:id" element={<Artwork3DView />} />
+          <Route path="/artwork/:id" element={<Artwork3DView />} />
           {/* add more header-enabled routes here */}
         </Route>
       </Routes>
