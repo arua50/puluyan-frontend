@@ -7,22 +7,23 @@ const Artworks = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const getImageUrl = (imageData) => {
-    const baseUrl =
-      import.meta.env.VITE_API_URL || process.env.REACT_APP_API_URL || "";
+ const getImageUrl = (imageData) => {
+  const baseUrl = import.meta.env.VITE_API_URL || process.env.REACT_APP_API_URL || "";
 
-    const url = imageData?.data?.url || imageData?.url;
+  const url = imageData?.data?.url || imageData?.url;
 
-    if (url) {
-      if (url.startsWith("http")) {
-        return url;
-      }
-      return `${baseUrl}${url}`;
+  if (url) {
+    // If it's already a full URL (http/https), return as is
+    if (url.startsWith("http")) {
+      return url;
     }
+    // If it's relative, attach base URL
+    return `${baseUrl}${url}`;
+  }
 
-    return "https://via.placeholder.com/300x300?text=No+Image";
-  };
-
+  // Fallback placeholder
+  return "https://via.placeholder.com/300x300?text=No+Image";
+};
   useEffect(() => {
     const fetchArtworks = async () => {
       try {
@@ -87,7 +88,7 @@ const Artworks = () => {
         >
           {artworks.map((artwork) => (
             <Link
-              to={`/artwork/${artwork.id}`} // 🔥 redirects to new 3D viewer page
+              to={`/artwork/${artwork.id}`}
               key={artwork.id}
               style={{ textDecoration: "none", color: "inherit" }}
             >
@@ -110,7 +111,6 @@ const Artworks = () => {
                     {artwork.title}
                   </h2>
                   <p style={{ color: "#666" }}>By {artwork.artist}</p>
-                  <p style={{ fontSize: "14px", color: "#007bff" }}>▶ View 3D</p>
                 </div>
               </div>
             </Link>
