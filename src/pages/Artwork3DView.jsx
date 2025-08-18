@@ -1,24 +1,11 @@
-import React, { useEffect, useState, Suspense } from "react";
-import { useParams } from "react-router-dom";
-import { Canvas } from "@react-three/fiber";
-import { OrbitControls, Environment, useGLTF } from "@react-three/drei";
+import React, { useEffect, useState } from "react";
+import { useParams, Link } from "react-router-dom";
 
-const getFileUrl = (fileData) => {
-  const baseUrl =
-    import.meta.env.VITE_API_URL || process.env.REACT_APP_API_URL || "";
-  const url = fileData?.data?.url || fileData?.url;
-  if (!url) return null;
-  return url.startsWith("http") ? url : `${baseUrl}${url}`;
-};
+// Install model-viewer: npm install @google/model-viewer
+import "@google/model-viewer";
 
-// Component to load the GLTF/GLB model
-function Model({ modelUrl }) {
-  const { scene } = useGLTF(modelUrl);
-  return <primitive object={scene} scale={1} />;
-}
-
-const Artwork3D = () => {
-  const { id } = useParams();
+const Artwork3DView = () => {
+  const { id } = useParams(); // artwork id
   const [artwork, setArtwork] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -29,45 +16,63 @@ const Artwork3D = () => {
         const res = await fetch(
           `https://puluyanartgallery.onrender.com/api/artworks?filters[id][$eq]=${id}&populate=*`
         );
-        if (!res.ok) throw new Error("Failed to fetch artwork");
+
+        if (!res.ok) throw new Error(`HTTP error! Status ${res.status}`);
 
         const json = await res.json();
-        const attrs = json.data;
+        if (json.data.length === 0) {
+          throw new Error("Artwork not found");
+        }
+
+        const item = json.data[0];
         setArtwork({
-          title: attrs.art_title,
-          artist: attrs.artist,
-          modelUrl: getFileUrl(attrs.model3D), // assuming Strapi field is art_3d_model
+          id: item.id,
+          title: item.art_title,
+          description: item.art_description,
+          artist: item.artist,
+          image: item.art_image?.url,
+          model3D: item.model3D?.url, // ✅ GLB file
         });
       } catch (err) {
-        console.error(err);
-        setError("Could not load 3D artwork.");
+        console.error("Error fetching artwork:", err);
+        setError("Failed to fetch artwork");
       } finally {
         setLoading(false);
       }
     };
+
     fetchArtwork();
   }, [id]);
 
-  if (loading) return <p style={{ textAlign: "center" }}>Loading 3D model...</p>;
+  if (loading) return <p style={{ textAlign: "center" }}>Loading 3D artwork...</p>;
   if (error) return <p style={{ textAlign: "center", color: "red" }}>{error}</p>;
-  if (!artwork?.modelUrl)
-    return <p style={{ textAlign: "center" }}>No 3D model available.</p>;
+  if (!artwork) return null;
 
   return (
-    <div style={{ height: "100vh", width: "100%" }}>
-      <h1 style={{ textAlign: "center", padding: "10px" }}>
-        {artwork.title} — {artwork.artist}
+    <div style={{ padding: "24px", maxWidth: "900px", margin: "0 auto" }}>
+      <Link to="/" style={{ color: "#007bff", textDecoration: "underline" }}>
+        ← Back to Exhibitions
+      </Link>
+      <h1 style={{ fontSize: "28px", fontWeight: "bold", margin: "16px 0" }}>
+        {artwork.title}
       </h1>
-      <Canvas camera={{ position: [0, 0, 5], fov: 50 }}>
-        <ambientLight intensity={0.5} />
-        <Suspense fallback={null}>
-          <Model modelUrl={artwork.modelUrl} />
-          <Environment preset="studio" />
-          <OrbitControls />
-        </Suspense>
-      </Canvas>
+      <p style={{ color: "#666", marginBottom: "8px" }}>By {artwork.artist}</p>
+      <p style={{ marginBottom: "24px" }}>{artwork.description}</p>
+
+      {artwork.model3D ? (
+        <model-viewer
+          src={artwork.model3D}
+          alt={artwork.title}
+          ar
+          auto-rotate
+          camera-controls
+          style={{ width: "100%", height: "500px", border: "1px solid #ccc", borderRadius: "10px" }}
+        />
+      ) : (
+        <p style={{ color: "red" }}>⚠ No 3D model available for this artwork</p>
+      )}
     </div>
   );
 };
 
-export default Artwork3D;
+export default Artwork3DView;
