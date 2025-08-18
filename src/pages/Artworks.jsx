@@ -88,7 +88,7 @@ const Artworks = () => {
         >
           {artworks.map((artwork) => (
             <Link
-              to={`/artwork/${artwork.id}`}
+              to={`/artwork/${artwork.documentId}`}
               key={artwork.id}
               style={{ textDecoration: "none", color: "inherit" }}
             >
