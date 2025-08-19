@@ -40,7 +40,7 @@ const Artwork3DView = () => {
         if (!item) throw new Error("Artwork not found");
 
         setArtwork({
-          id: item.documentId,
+          id: item.id,
           title: item.art_title || "Untitled",
           modelUrl: getFileUrl(item.model3D), // <-- field in Strapi (make sure it matches!)
           imageUrl: getFileUrl(item.art_image),
