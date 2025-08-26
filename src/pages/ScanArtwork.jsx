@@ -1,80 +1,102 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import Webcam from "react-webcam";
-import { ArrowDownCircle, ArrowUpCircle, PauseCircle, PlayCircle, SwitchCamera } from "lucide-react";
+import * as tmImage from "@teachablemachine/image";
 import "./ScanArtwork.css";
+import { ArrowDownCircle, ArrowUp01Icon, ArrowUpCircle, LucideTriangle, PauseCircle, PlayCircle, SwitchCamera, Triangle, TriangleDashed, TriangleIcon } from "lucide-react";
 
 /* CONFIG */
-const MATCH_API = "http://localhost:8000/match-artwork/"; 
-const STRAPI_API = "https://puluyanartgallery.onrender.com/api/artworks";
+const MODEL_URL =
+  "https://teachablemachine.withgoogle.com/models/hTUrBVwHQ/";
+const API_BASE =
+  "https://puluyanartgallery.onrender.com/api/artworks?populate=*";
 
 const ScanArtwork = () => {
   const webcamRef = useRef(null);
   const pollRef = useRef(null);
 
+  /* state */
+  const [model, setModel] = useState(null);
+  const [maxPrediction, setMaxPrediction] = useState(null);
+
   const [title, setTitle] = useState("");
   const [artist, setArtist] = useState("");
   const [description, setDescription] = useState("");
+
   const [showDescription, setShowDescription] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [facingMode, setFacingMode] = useState("environment");
 
-  /* Poll every 3 seconds */
+  // NEW — camera facingMode
+  const [facingMode, setFacingMode] = useState("environment"); // or "user"
+
+  /* load model */
   useEffect(() => {
-    pollRef.current = setInterval(() => captureAndMatch(), 3000);
+    (async () => {
+      try {
+        const m = await tmImage.load(
+          `${MODEL_URL}model.json`,
+          `${MODEL_URL}metadata.json`
+        );
+        setModel(m);
+      } catch (e) {
+        console.error("TM load error", e);
+      }
+    })();
+  }, []);
+
+  /* start polling */
+  useEffect(() => {
+    if (!model) return;
+    pollRef.current = setInterval(() => predict(model), 3000);
     return () => {
       clearInterval(pollRef.current);
       window.speechSynthesis.cancel();
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [model]);
 
-  /* Capture image from webcam */
-  const captureAndMatch = async () => {
-    if (!webcamRef.current) return;
-    const imageSrc = webcamRef.current.getScreenshot();
-
-    if (imageSrc) {
-      try {
-        const blob = await fetch(imageSrc).then((res) => res.blob());
-        const formData = new FormData();
-        formData.append("file", blob, "scan.jpg");
-
-        // Send image to TensorFlow matcher API
-        const response = await fetch(MATCH_API, {
-          method: "POST",
-          body: formData,
-        });
-        const data = await response.json();
-
-        if (data.match && data.match.score > 0.7) {
-          fetchArtworkDetails(data.match.id);
-        } else {
-          console.log("No confident match found");
-        }
-      } catch (e) {
-        console.error("Matching error:", e);
-      }
-    }
-  };
-
-  /* Fetch artwork details from Strapi */
-  const fetchArtworkDetails = async (artworkId) => {
+  /* predict */
+  const predict = async (m) => {
+    if (!webcamRef.current?.video) return;
+    if (webcamRef.current.video.readyState !== 4) return;
     try {
-      const res = await fetch(`${STRAPI_API}/${artworkId}?populate=*`);
-      const json = await res.json();
-      if (json.data) {
-        const art = json.data;
-        setTitle(art.attributes.art_title || "Untitled");
-        setArtist(art.attributes.artist || "Unknown artist");
-        setDescription(art.attributes.art_description || "No description available.");
-        setShowDescription(false);
-        speak(art.attributes.art_description);
+      const preds = await m.predict(webcamRef.current.video);
+      const highest = preds.reduce((a, b) =>
+        a.probability > b.probability ? a : b
+      );
+      if (highest.probability > 0.9 && highest.className !== maxPrediction) {
+        setMaxPrediction(highest.className);
+        await fetchArtwork(highest.className);
       }
     } catch (e) {
-      console.error("Strapi fetch error:", e);
+      console.error("Prediction error", e);
     }
   };
 
-  /* Voice narration */
+  /* fetch artwork */
+  const fetchArtwork = async (label) => {
+    try {
+      const res = await fetch(`${API_BASE}&filters[slug][$eq]=${label}`);
+      const json = await res.json();
+      if (json.data?.length) {
+        const art = json.data[0];
+        setTitle(art.art_title || "Untitled");
+        setArtist(art.artist || "Unknown artist");
+        setDescription(art.art_description || "No description available.");
+        setShowDescription(false);
+        speak(art.art_description);
+      } else {
+        setTitle("");
+        setArtist("");
+        setDescription("Artwork not found in the database.");
+        setShowDescription(true);
+        speak("Artwork not found.");
+      }
+    } catch (e) {
+      console.error("API error", e);
+    }
+  };
+
+  /* voice utils */
   const speak = (txt) => {
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(txt);
@@ -93,10 +115,12 @@ const ScanArtwork = () => {
     }
   };
 
+  /* NEW — switch camera */
   const switchCamera = useCallback(() => {
     setFacingMode((prev) => (prev === "user" ? "environment" : "user"));
   }, []);
 
+  /* render */
   return (
     <div className="text-center">
       <div className="scan-wrapper">
@@ -107,50 +131,52 @@ const ScanArtwork = () => {
           className="webcam-view"
         />
 
-        {/* Scanning Overlay */}
+        {/* 1 ▸ scanning overlay */}
         {!description && (
           <>
-            <div className="bl" />
-            <div className="tr" />
+            
+              <div className="bl" />
+              <div className="tr" />
+           
+            
+
+            {/* NEW ▸ camera-flip button (only while scanning) */}
             <button
               className="cam-flip-btn"
               onClick={switchCamera}
               title="Switch camera"
             >
-              <SwitchCamera />
+             <SwitchCamera/>
             </button>
           </>
         )}
 
-        {/* Small description preview */}
+        {/* 2 ▸ buttons bar (description hidden) */}
         {description && !showDescription && (
           <div className="desc-cardsmall">
             <div className="buttons-bar">
-              <div onClick={toggleVoice}>
-                {isPaused ? <PlayCircle size={32} /> : <PauseCircle size={32} />}
-              </div>
+              <div onClick={toggleVoice}>{isPaused ? <PlayCircle size={32}/> : <PauseCircle size={32}/>}</div>
               <div
                 onClick={() => setShowDescription(true)}
                 title="Show description"
               >
-                <ArrowUpCircle size={32} />
+                <ArrowUpCircle size={32}/>
+               
               </div>
             </div>
           </div>
         )}
 
-        {/* Full description */}
+        {/* 3 ▸ description card */}
         {showDescription && (
           <div className="desc-card">
             <div className="buttons-bar">
-              <div onClick={toggleVoice}>
-                {isPaused ? <PlayCircle size={32} /> : <PauseCircle size={32} />}
-              </div>
+              <div onClick={toggleVoice}>{isPaused ? <PlayCircle size={32}/> : <PauseCircle size={32}/>}</div>
               <div
                 onClick={() => setShowDescription(false)}
                 title="Hide description"
               >
-                <ArrowDownCircle size={32} />
+                <ArrowDownCircle size={32}/>
               </div>
             </div>
             <h3>{title}</h3>

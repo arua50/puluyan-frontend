@@ -17,27 +17,30 @@ const Exhibitions = () => {
 
         console.log("API Response:", json); // Debug
 
-        const simplified = json.data.map((item) => {
-          const image = item.coverImage;
+        // ✅ Filter exhibitions where exb_status === "archive"
+        const simplified = json.data
+          .filter((item) => item.exb_status === "archive")
+          .map((item) => {
+            const image = item.coverImage;
 
-          // Default placeholder
-          let imageUrl = "https://via.placeholder.com/400x300?text=No+Image";
+            // Default placeholder
+            let imageUrl = "https://via.placeholder.com/400x300?text=No+Image";
 
-          // Use medium if available, else original
-          if (image?.formats?.medium?.url) {
-            imageUrl = image.formats.medium.url; // ✅ already full URL
-          } else if (image?.url) {
-            imageUrl = image.url; // ✅ already full URL
-          }
+            // Use medium if available, else original
+            if (image?.formats?.medium?.url) {
+              imageUrl = image.formats.medium.url;
+            } else if (image?.url) {
+              imageUrl = image.url;
+            }
 
-          return {
-            id: item.id,
-            exb_title: item.exb_title || "Untitled Exhibition",
-            startDate: item.startDate || "Unknown",
-            endDate: item.endDate || "Unknown",
-            imageUrl,
-          };
-        });
+            return {
+              id: item.id,
+              exb_title: item.exb_title || "Untitled Exhibition",
+              startDate: item.startDate || "Unknown",
+              endDate: item.endDate || "Unknown",
+              imageUrl,
+            };
+          });
 
         setExhibitions(simplified);
       } catch (error) {
@@ -55,25 +58,29 @@ const Exhibitions = () => {
   return (
     <div className="exhibitions-container">
       <div className="exhibitions-list">
-        {exhibitions.map((exhibition) => (
-          <div
-            key={exhibition.id}
-            className="exhibition-card"
-            onClick={() => handleExhibitionClick(exhibition.id)}
-          >
-            <img
-              src={exhibition.imageUrl}
-              alt={exhibition.exb_title}
-              className="exhibition-image"
-            />
-            <div className="exhibition-overlay">
-              <h2 className="exhibition-title">{exhibition.exb_title}</h2>
-              <p className="exhibition-dates">
-                {exhibition.startDate} – {exhibition.endDate}
-              </p>
+        {exhibitions.length > 0 ? (
+          exhibitions.map((exhibition) => (
+            <div
+              key={exhibition.id}
+              className="exhibition-card"
+              onClick={() => handleExhibitionClick(exhibition.id)}
+            >
+              <img
+                src={exhibition.imageUrl}
+                alt={exhibition.exb_title}
+                className="exhibition-image"
+              />
+              <div className="exhibition-overlay">
+                <h2 className="exhibition-title">{exhibition.exb_title}</h2>
+                <p className="exhibition-dates">
+                  {exhibition.startDate} – {exhibition.endDate}
+                </p>
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        ) : (
+          <p className="no-exhibitions">No archived exhibitions found.</p>
+        )}
       </div>
     </div>
   );
