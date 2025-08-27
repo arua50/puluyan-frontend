@@ -1,3 +1,4 @@
+// src/components/VoicePlayer.jsx
 import React, { useState, useRef, useEffect } from "react";
 
 const VoicePlayer = ({ text }) => {
@@ -12,23 +13,11 @@ const VoicePlayer = ({ text }) => {
   const [duration, setDuration] = useState(0);
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
 
-  // Estimate duration (3 words per second ~ 180 WPM)
-  const estimateDuration = (text) => {
-    const words = text.trim().split(/\s+/).length;
-    return Math.ceil(words / 3);
-  };
-
-  // Format time as mm:ss
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
-  };
+  const estimateDuration = (text) => Math.ceil(text.trim().split(/\s+/).length / 3);
+  const formatTime = (sec) => `${Math.floor(sec / 60)}:${(sec % 60).toString().padStart(2, "0")}`;
 
   const stopSpeech = () => {
-    if (synthRef.current.speaking) {
-      synthRef.current.cancel();
-    }
+    synthRef.current.cancel();
     clearInterval(timerRef.current);
     setIsPlaying(false);
     setIsPaused(false);
@@ -39,26 +28,17 @@ const VoicePlayer = ({ text }) => {
   const startSpeech = (text, startIndex = 0) => {
     stopSpeech();
     if (!text) return;
-
     const words = text.split(" ");
     wordsRef.current = words;
     const chunk = words.slice(startIndex).join(" ");
 
     const utterance = new SpeechSynthesisUtterance(chunk);
     utterance.lang = "en-US";
-
-    const totalSecs = estimateDuration(text);
-    setDuration(totalSecs);
-    setElapsed((startIndex / words.length) * totalSecs);
+    setDuration(estimateDuration(text));
+    setElapsed((startIndex / words.length) * duration);
 
     timerRef.current = setInterval(() => {
-      setElapsed((prev) => {
-        if (prev >= totalSecs) {
-          clearInterval(timerRef.current);
-          return totalSecs;
-        }
-        return prev + 1;
-      });
+      setElapsed((prev) => (prev >= duration ? duration : prev + 1));
     }, 1000);
 
     utterance.onend = () => {
@@ -77,8 +57,7 @@ const VoicePlayer = ({ text }) => {
   const handleSeek = (e) => {
     if (!text || !duration) return;
     const bar = e.target.getBoundingClientRect();
-    const clickX = e.clientX - bar.left;
-    const ratio = clickX / bar.width;
+    const ratio = (e.clientX - bar.left) / bar.width;
     const newTime = Math.floor(ratio * duration);
     const words = wordsRef.current.length;
     const newWordIndex = Math.floor((newTime / duration) * words);
@@ -88,9 +67,8 @@ const VoicePlayer = ({ text }) => {
   };
 
   const handlePlayPause = () => {
-    if (!isPlaying) {
-      startSpeech(text, currentWordIndex);
-    } else if (isPaused) {
+    if (!isPlaying) startSpeech(text, currentWordIndex);
+    else if (isPaused) {
       synthRef.current.resume();
       setIsPaused(false);
     } else {
@@ -108,7 +86,6 @@ const VoicePlayer = ({ text }) => {
 
   return (
     <div style={{ textAlign: "center", marginTop: "20px" }}>
-      {/* Play / Pause Button */}
       <button
         onClick={handlePlayPause}
         style={{
@@ -120,8 +97,6 @@ const VoicePlayer = ({ text }) => {
       >
         {isPlaying && !isPaused ? "Pause" : "Play"}
       </button>
-
-      {/* Stop Button */}
       <button
         onClick={stopSpeech}
         style={{
@@ -132,8 +107,6 @@ const VoicePlayer = ({ text }) => {
       >
         Stop
       </button>
-
-      {/* Progress Bar */}
       <div
         style={{
           marginTop: "15px",
@@ -158,8 +131,6 @@ const VoicePlayer = ({ text }) => {
           }}
         ></div>
       </div>
-
-      {/* Timer */}
       <p style={{ marginTop: "8px", fontSize: "14px" }}>
         {formatTime(elapsed)} / {formatTime(duration)}
       </p>
