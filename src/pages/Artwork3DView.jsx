@@ -3,7 +3,7 @@ import React, { useEffect, useState, Suspense } from "react";
 import { useParams } from "react-router-dom";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, useGLTF } from "@react-three/drei";
-import { PlayCircle, PauseCircle, ArrowUpCircle, ArrowDownCircle } from "lucide-react";
+import { PlayCircle, PauseCircle, Square, ArrowUpCircle, ArrowDownCircle } from "lucide-react";
 
 const Model = ({ url }) => {
   const { scene } = useGLTF(url);
@@ -22,6 +22,7 @@ const Artwork3DView = () => {
   const [description, setDescription] = useState("");
   const [showDescription, setShowDescription] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   const baseUrl =
     import.meta.env.VITE_API_URL || process.env.REACT_APP_API_URL || "";
@@ -33,26 +34,42 @@ const Artwork3DView = () => {
     return `${baseUrl}${url}`;
   };
 
-  /* voice utils */
+  /* ---------- Voice utilities ---------- */
   const speak = (txt) => {
-    window.speechSynthesis.cancel();
     if (!txt) return;
-    const u = new SpeechSynthesisUtterance(txt);
-    u.lang = "en-US";
-    u.onend = () => setIsPaused(false);
-    window.speechSynthesis.speak(u);
+    const synth = window.speechSynthesis;
+    synth.cancel(); // clear any ongoing speech
+    const utterance = new SpeechSynthesisUtterance(txt);
+    utterance.lang = "en-US";
+    utterance.onend = () => {
+      setIsPaused(false);
+      setIsPlaying(false);
+    };
+    synth.speak(utterance);
+    setIsPlaying(true);
+    setIsPaused(false);
   };
 
   const toggleVoice = () => {
-    if (window.speechSynthesis.paused) {
-      window.speechSynthesis.resume();
-      setIsPaused(false);
-    } else if (window.speechSynthesis.speaking) {
-      window.speechSynthesis.pause();
+    const synth = window.speechSynthesis;
+    if (synth.speaking && !synth.paused) {
+      synth.pause();
       setIsPaused(true);
+    } else if (synth.paused) {
+      synth.resume();
+      setIsPaused(false);
+    } else if (!synth.speaking) {
+      speak(description);
     }
   };
 
+  const stopVoice = () => {
+    window.speechSynthesis.cancel();
+    setIsPlaying(false);
+    setIsPaused(false);
+  };
+
+  /* ---------- Fetch Artwork ---------- */
   useEffect(() => {
     const fetchArtwork = async () => {
       try {
@@ -79,14 +96,11 @@ const Artwork3DView = () => {
           imageUrl,
         });
 
-        // update description states
+        // set description values (no auto-play)
         setTitle(item.art_title || "Untitled");
         setArtist(item.artist || "Unknown artist");
         setDescription(item.art_description || "No description available.");
         setShowDescription(false);
-
-        // auto play narration
-        speak(item.art_description);
       } catch (err) {
         console.error(err);
         setError("Could not load 3D model.");
@@ -98,6 +112,7 @@ const Artwork3DView = () => {
     fetchArtwork();
   }, [id]);
 
+  /* ---------- UI ---------- */
   if (loading) return <p style={{ textAlign: "center" }}>Loading 3D model...</p>;
   if (error) return <p style={{ color: "red", textAlign: "center" }}>{error}</p>;
 
@@ -125,37 +140,57 @@ const Artwork3DView = () => {
         </Canvas>
       </div>
 
-      {/* 2 ▸ buttons bar (description hidden) */}
+      {/* Control buttons (when description hidden) */}
       {description && !showDescription && (
-        <div className="desc-cardsmall" style={{ marginTop: "16px" }}>
-          <div className="buttons-bar" style={{ display: "flex", gap: "16px", justifyContent: "center" }}>
+        <div style={{ marginTop: "16px" }}>
+          <div style={{ display: "flex", gap: "16px", justifyContent: "center" }}>
             <div onClick={toggleVoice} style={{ cursor: "pointer" }}>
-              {isPaused ? <PlayCircle size={32}/> : <PauseCircle size={32}/>}
+              {isPaused || !isPlaying ? <PlayCircle size={32} /> : <PauseCircle size={32} />}
             </div>
+            {isPlaying && (
+              <div onClick={stopVoice} style={{ cursor: "pointer" }} title="Stop narration">
+                <Square size={32} />
+              </div>
+            )}
             <div
               onClick={() => setShowDescription(true)}
               title="Show description"
               style={{ cursor: "pointer" }}
             >
-              <ArrowUpCircle size={32}/>
+              <ArrowUpCircle size={32} />
             </div>
           </div>
         </div>
       )}
 
-      {/* 3 ▸ description card */}
+      {/* Description card */}
       {showDescription && (
-        <div className="desc-card" style={{ marginTop: "16px", border: "1px solid #ccc", borderRadius: "12px", padding: "16px", textAlign: "left", maxWidth: "600px", marginInline: "auto" }}>
-          <div className="buttons-bar" style={{ display: "flex", gap: "16px", justifyContent: "flex-end" }}>
+        <div
+          style={{
+            marginTop: "16px",
+            border: "1px solid #ccc",
+            borderRadius: "12px",
+            padding: "16px",
+            textAlign: "left",
+            maxWidth: "600px",
+            marginInline: "auto",
+          }}
+        >
+          <div style={{ display: "flex", gap: "16px", justifyContent: "flex-end" }}>
             <div onClick={toggleVoice} style={{ cursor: "pointer" }}>
-              {isPaused ? <PlayCircle size={32}/> : <PauseCircle size={32}/>}
+              {isPaused || !isPlaying ? <PlayCircle size={32} /> : <PauseCircle size={32} />}
             </div>
+            {isPlaying && (
+              <div onClick={stopVoice} style={{ cursor: "pointer" }} title="Stop narration">
+                <Square size={32} />
+              </div>
+            )}
             <div
               onClick={() => setShowDescription(false)}
               title="Hide description"
               style={{ cursor: "pointer" }}
             >
-              <ArrowDownCircle size={32}/>
+              <ArrowDownCircle size={32} />
             </div>
           </div>
           <h3>{title}</h3>
