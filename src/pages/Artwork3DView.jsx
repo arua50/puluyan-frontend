@@ -1,205 +1,170 @@
-// src/pages/Artwork3DView.jsx
-import React, { useEffect, useState, Suspense } from "react";
-import { useParams } from "react-router-dom";
-import { Canvas } from "@react-three/fiber";
-import { OrbitControls, useGLTF } from "@react-three/drei";
-import { PlayCircle, PauseCircle, Square, ArrowUpCircle, ArrowDownCircle } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
 
-const Model = ({ url }) => {
-  const { scene } = useGLTF(url);
-  return <primitive object={scene} scale={1.5} />;
-};
+const VoicePlayer = ({ text }) => {
+  const synthRef = useRef(window.speechSynthesis);
+  const utteranceRef = useRef(null);
+  const wordsRef = useRef([]);
+  const timerRef = useRef(null);
 
-const Artwork3DView = () => {
-  const { id } = useParams();
-  const [artwork, setArtwork] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  // description-related states
-  const [title, setTitle] = useState("");
-  const [artist, setArtist] = useState("");
-  const [description, setDescription] = useState("");
-  const [showDescription, setShowDescription] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [currentWordIndex, setCurrentWordIndex] = useState(0);
 
-  const baseUrl =
-    import.meta.env.VITE_API_URL || process.env.REACT_APP_API_URL || "";
-
-  const getFileUrl = (file) => {
-    const url = file?.url || file?.data?.attributes?.url;
-    if (!url) return null;
-    if (url.startsWith("http")) return url;
-    return `${baseUrl}${url}`;
+  // Estimate duration (3 words per second ~ 180 WPM)
+  const estimateDuration = (text) => {
+    const words = text.trim().split(/\s+/).length;
+    return Math.ceil(words / 3);
   };
 
-  /* ---------- Voice utilities ---------- */
-  const speak = (txt) => {
-    if (!txt) return;
-    const synth = window.speechSynthesis;
-    synth.cancel(); // clear any ongoing speech
-    const utterance = new SpeechSynthesisUtterance(txt);
+  // Format time as mm:ss
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  const stopSpeech = () => {
+    if (synthRef.current.speaking) {
+      synthRef.current.cancel();
+    }
+    clearInterval(timerRef.current);
+    setIsPlaying(false);
+    setIsPaused(false);
+    setElapsed(0);
+    setCurrentWordIndex(0);
+  };
+
+  const startSpeech = (text, startIndex = 0) => {
+    stopSpeech();
+    if (!text) return;
+
+    const words = text.split(" ");
+    wordsRef.current = words;
+    const chunk = words.slice(startIndex).join(" ");
+
+    const utterance = new SpeechSynthesisUtterance(chunk);
     utterance.lang = "en-US";
+
+    const totalSecs = estimateDuration(text);
+    setDuration(totalSecs);
+    setElapsed((startIndex / words.length) * totalSecs);
+
+    timerRef.current = setInterval(() => {
+      setElapsed((prev) => {
+        if (prev >= totalSecs) {
+          clearInterval(timerRef.current);
+          return totalSecs;
+        }
+        return prev + 1;
+      });
+    }, 1000);
+
     utterance.onend = () => {
-      setIsPaused(false);
+      clearInterval(timerRef.current);
       setIsPlaying(false);
+      setIsPaused(false);
+      setElapsed(0);
     };
-    synth.speak(utterance);
+
+    synthRef.current.speak(utterance);
+    utteranceRef.current = utterance;
     setIsPlaying(true);
     setIsPaused(false);
   };
 
-  const toggleVoice = () => {
-    const synth = window.speechSynthesis;
-    if (synth.speaking && !synth.paused) {
-      synth.pause();
-      setIsPaused(true);
-    } else if (synth.paused) {
-      synth.resume();
+  const handleSeek = (e) => {
+    if (!text || !duration) return;
+    const bar = e.target.getBoundingClientRect();
+    const clickX = e.clientX - bar.left;
+    const ratio = clickX / bar.width;
+    const newTime = Math.floor(ratio * duration);
+    const words = wordsRef.current.length;
+    const newWordIndex = Math.floor((newTime / duration) * words);
+    setElapsed(newTime);
+    setCurrentWordIndex(newWordIndex);
+    startSpeech(text, newWordIndex);
+  };
+
+  const handlePlayPause = () => {
+    if (!isPlaying) {
+      startSpeech(text, currentWordIndex);
+    } else if (isPaused) {
+      synthRef.current.resume();
       setIsPaused(false);
-    } else if (!synth.speaking) {
-      speak(description);
+    } else {
+      synthRef.current.pause();
+      setIsPaused(true);
     }
   };
 
-  const stopVoice = () => {
-    window.speechSynthesis.cancel();
-    setIsPlaying(false);
-    setIsPaused(false);
-  };
-
-  /* ---------- Fetch Artwork ---------- */
   useEffect(() => {
-    const fetchArtwork = async () => {
-      try {
-        const response = await fetch(
-          `https://puluyanartgallery.onrender.com/api/artworks?filters[id][$eq]=${id}&populate=*`
-        );
-
-        if (!response.ok) throw new Error("Failed to fetch artwork");
-
-        const json = await response.json();
-        const item = json.data[0];
-
-        if (!item) throw new Error("Artwork not found");
-
-        const modelUrl = getFileUrl(item.model3D);
-        const imageUrl = getFileUrl(item.art_image);
-
-        setArtwork({
-          id: item.id,
-          title: item.art_title || "Untitled",
-          artist: item.artist || "Unknown artist",
-          description: item.art_description || "No description available.",
-          modelUrl,
-          imageUrl,
-        });
-
-        // set description values (no auto-play)
-        setTitle(item.art_title || "Untitled");
-        setArtist(item.artist || "Unknown artist");
-        setDescription(item.art_description || "No description available.");
-        setShowDescription(false);
-      } catch (err) {
-        console.error(err);
-        setError("Could not load 3D model.");
-      } finally {
-        setLoading(false);
-      }
+    return () => {
+      clearInterval(timerRef.current);
+      stopSpeech();
     };
-
-    fetchArtwork();
-  }, [id]);
-
-  /* ---------- UI ---------- */
-  if (loading) return <p style={{ textAlign: "center" }}>Loading 3D model...</p>;
-  if (error) return <p style={{ color: "red", textAlign: "center" }}>{error}</p>;
+  }, []);
 
   return (
-    <div style={{ padding: "16px", textAlign: "center" }}>
-      <h1 style={{ fontSize: "24px", fontWeight: "bold", marginBottom: "12px" }}>
-        {artwork.title} — 3D View
-      </h1>
+    <div style={{ textAlign: "center", marginTop: "20px" }}>
+      {/* Play / Pause Button */}
+      <button
+        onClick={handlePlayPause}
+        style={{
+          padding: "10px 20px",
+          fontSize: "16px",
+          marginRight: "10px",
+          cursor: "pointer",
+        }}
+      >
+        {isPlaying && !isPaused ? "Pause" : "Play"}
+      </button>
 
-      <div style={{ height: "500px", width: "100%", background: "#111", marginBottom: "16px" }}>
-        <Canvas camera={{ position: [0, 0, 5], fov: 50 }}>
-          <ambientLight intensity={0.5} />
-          <directionalLight position={[5, 5, 5]} />
-          <Suspense fallback={null}>
-            {artwork.modelUrl ? (
-              <Model url={artwork.modelUrl} />
-            ) : (
-              <mesh>
-                <boxGeometry />
-                <meshStandardMaterial color="hotpink" />
-              </mesh>
-            )}
-          </Suspense>
-          <OrbitControls />
-        </Canvas>
-      </div>
+      {/* Stop Button */}
+      <button
+        onClick={stopSpeech}
+        style={{
+          padding: "10px 20px",
+          fontSize: "16px",
+          cursor: "pointer",
+        }}
+      >
+        Stop
+      </button>
 
-      {/* Control buttons (when description hidden) */}
-      {description && !showDescription && (
-        <div style={{ marginTop: "16px" }}>
-          <div style={{ display: "flex", gap: "16px", justifyContent: "center" }}>
-            <div onClick={toggleVoice} style={{ cursor: "pointer" }}>
-              {isPaused || !isPlaying ? <PlayCircle size={32} /> : <PauseCircle size={32} />}
-            </div>
-            {isPlaying && (
-              <div onClick={stopVoice} style={{ cursor: "pointer" }} title="Stop narration">
-                <Square size={32} />
-              </div>
-            )}
-            <div
-              onClick={() => setShowDescription(true)}
-              title="Show description"
-              style={{ cursor: "pointer" }}
-            >
-              <ArrowUpCircle size={32} />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Description card */}
-      {showDescription && (
+      {/* Progress Bar */}
+      <div
+        style={{
+          marginTop: "15px",
+          width: "80%",
+          height: "6px",
+          background: "#ccc",
+          borderRadius: "3px",
+          position: "relative",
+          marginInline: "auto",
+          cursor: "pointer",
+        }}
+        onClick={handleSeek}
+      >
         <div
           style={{
-            marginTop: "16px",
-            border: "1px solid #ccc",
-            borderRadius: "12px",
-            padding: "16px",
-            textAlign: "left",
-            maxWidth: "600px",
-            marginInline: "auto",
+            position: "absolute",
+            height: "100%",
+            width: `${(elapsed / duration) * 100}%`,
+            background: "#333",
+            borderRadius: "3px",
+            transition: "width 0.3s linear",
           }}
-        >
-          <div style={{ display: "flex", gap: "16px", justifyContent: "flex-end" }}>
-            <div onClick={toggleVoice} style={{ cursor: "pointer" }}>
-              {isPaused || !isPlaying ? <PlayCircle size={32} /> : <PauseCircle size={32} />}
-            </div>
-            {isPlaying && (
-              <div onClick={stopVoice} style={{ cursor: "pointer" }} title="Stop narration">
-                <Square size={32} />
-              </div>
-            )}
-            <div
-              onClick={() => setShowDescription(false)}
-              title="Hide description"
-              style={{ cursor: "pointer" }}
-            >
-              <ArrowDownCircle size={32} />
-            </div>
-          </div>
-          <h3>{title}</h3>
-          <h4>{artist}</h4>
-          <p>{description}</p>
-        </div>
-      )}
+        ></div>
+      </div>
+
+      {/* Timer */}
+      <p style={{ marginTop: "8px", fontSize: "14px" }}>
+        {formatTime(elapsed)} / {formatTime(duration)}
+      </p>
     </div>
   );
 };
 
-export default Artwork3DView;
+export default VoicePlayer;
