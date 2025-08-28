@@ -63,10 +63,10 @@ const Artwork3DView = () => {
   return (
     <div style={{ padding: "16px", textAlign: "center" }}>
       <h1 style={{ fontSize: "24px", fontWeight: "bold", marginBottom: "12px" }}>
-        {artwork.title} — 3D View
+        {artwork.title}
       </h1>
 
-      <div style={{ height: "500px", width: "100%", background: "#111" }}>
+      <div style={{ height: "500px", width: "100%" }}>
         <Canvas camera={{ position: [0, 0, 5], fov: 50 }}>
           <ambientLight intensity={0.5} />
           <directionalLight position={[5, 5, 5]} />
@@ -82,6 +82,40 @@ const Artwork3DView = () => {
           </Suspense>
           <OrbitControls />
         </Canvas>
+
+          {/* 2 ▸ buttons bar (description hidden) */}
+        {description && !showDescription && (
+          <div className="desc-cardsmall">
+            <div className="buttons-bar">
+              <div onClick={toggleVoice}>{isPaused ? <PlayCircle size={32}/> : <PauseCircle size={32}/>}</div>
+              <div
+                onClick={() => setShowDescription(true)}
+                title="Show description"
+              >
+                <ArrowUpCircle size={32}/>
+               
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 3 ▸ description card */}
+        {showDescription && (
+          <div className="desc-card">
+            <div className="buttons-bar">
+              <div onClick={toggleVoice}>{isPaused ? <PlayCircle size={32}/> : <PauseCircle size={32}/>}</div>
+              <div
+                onClick={() => setShowDescription(false)}
+                title="Hide description"
+              >
+                <ArrowDownCircle size={32}/>
+              </div>
+            </div>
+            <h3>{title}</h3>
+            <h4>{artist}</h4>
+            <p>{description}</p>
+          </div>
+        )}
       </div>
     </div>
   );
