@@ -1,141 +1,90 @@
-// src/components/VoicePlayer.jsx
-import React, { useState, useRef, useEffect } from "react";
+// src/pages/Artwork3DView.jsx
+import React, { useEffect, useState, Suspense } from "react";
+import { useParams, Link } from "react-router-dom";
+import { Canvas } from "@react-three/fiber";
+import { OrbitControls, useGLTF } from "@react-three/drei";
 
-const VoicePlayer = ({ text }) => {
-  const synthRef = useRef(window.speechSynthesis);
-  const utteranceRef = useRef(null);
-  const wordsRef = useRef([]);
-  const timerRef = useRef(null);
+const Model = ({ url }) => {
+  const { scene } = useGLTF(url);
+  return <primitive object={scene} scale={1.5} />;
+};
 
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
-  const [elapsed, setElapsed] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [currentWordIndex, setCurrentWordIndex] = useState(0);
+const Artwork3DView = () => {
+  const { id } = useParams();
+  const [artwork, setArtwork] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const estimateDuration = (text) => Math.ceil(text.trim().split(/\s+/).length / 3);
-  const formatTime = (sec) => `${Math.floor(sec / 60)}:${(sec % 60).toString().padStart(2, "0")}`;
+  // Get API base URL from env
+  const baseUrl =
+    import.meta.env.VITE_API_URL || process.env.REACT_APP_API_URL || "";
 
-  const stopSpeech = () => {
-    synthRef.current.cancel();
-    clearInterval(timerRef.current);
-    setIsPlaying(false);
-    setIsPaused(false);
-    setElapsed(0);
-    setCurrentWordIndex(0);
-  };
-
-  const startSpeech = (text, startIndex = 0) => {
-    stopSpeech();
-    if (!text) return;
-    const words = text.split(" ");
-    wordsRef.current = words;
-    const chunk = words.slice(startIndex).join(" ");
-
-    const utterance = new SpeechSynthesisUtterance(chunk);
-    utterance.lang = "en-US";
-    setDuration(estimateDuration(text));
-    setElapsed((startIndex / words.length) * duration);
-
-    timerRef.current = setInterval(() => {
-      setElapsed((prev) => (prev >= duration ? duration : prev + 1));
-    }, 1000);
-
-    utterance.onend = () => {
-      clearInterval(timerRef.current);
-      setIsPlaying(false);
-      setIsPaused(false);
-      setElapsed(0);
-    };
-
-    synthRef.current.speak(utterance);
-    utteranceRef.current = utterance;
-    setIsPlaying(true);
-    setIsPaused(false);
-  };
-
-  const handleSeek = (e) => {
-    if (!text || !duration) return;
-    const bar = e.target.getBoundingClientRect();
-    const ratio = (e.clientX - bar.left) / bar.width;
-    const newTime = Math.floor(ratio * duration);
-    const words = wordsRef.current.length;
-    const newWordIndex = Math.floor((newTime / duration) * words);
-    setElapsed(newTime);
-    setCurrentWordIndex(newWordIndex);
-    startSpeech(text, newWordIndex);
-  };
-
-  const handlePlayPause = () => {
-    if (!isPlaying) startSpeech(text, currentWordIndex);
-    else if (isPaused) {
-      synthRef.current.resume();
-      setIsPaused(false);
-    } else {
-      synthRef.current.pause();
-      setIsPaused(true);
-    }
+  const getFileUrl = (file) => {
+    const url = file?.url || file?.data?.attributes?.url;
+    if (!url) return null;
+    if (url.startsWith("http")) return url;
+    return `${baseUrl}${url}`;
   };
 
   useEffect(() => {
-    return () => {
-      clearInterval(timerRef.current);
-      stopSpeech();
+    const fetchArtwork = async () => {
+      try {
+        const response = await fetch(
+        `https://puluyanartgallery.onrender.com/api/artworks?filters[id][$eq]=${id}&populate=*`        
+        );
+
+        if (!response.ok) throw new Error("Failed to fetch artwork");
+
+        const json = await response.json();
+        const item = json.data[0];
+
+        if (!item) throw new Error("Artwork not found");
+
+        setArtwork({
+          id: item.id,
+          title: item.art_title || "Untitled",
+          modelUrl: getFileUrl(item.model3D), // <-- field in Strapi (make sure it matches!)
+          imageUrl: getFileUrl(item.art_image),
+        });
+      } catch (err) {
+        console.error(err);
+        setError("Could not load 3D model.");
+      } finally {
+        setLoading(false);
+      }
     };
-  }, []);
+
+    fetchArtwork();
+  }, [id]);
+
+  if (loading) return <p style={{ textAlign: "center" }}>Loading 3D model...</p>;
+  if (error) return <p style={{ color: "red", textAlign: "center" }}>{error}</p>;
 
   return (
-    <div style={{ textAlign: "center", marginTop: "20px" }}>
-      <button
-        onClick={handlePlayPause}
-        style={{
-          padding: "10px 20px",
-          fontSize: "16px",
-          marginRight: "10px",
-          cursor: "pointer",
-        }}
-      >
-        {isPlaying && !isPaused ? "Pause" : "Play"}
-      </button>
-      <button
-        onClick={stopSpeech}
-        style={{
-          padding: "10px 20px",
-          fontSize: "16px",
-          cursor: "pointer",
-        }}
-      >
-        Stop
-      </button>
-      <div
-        style={{
-          marginTop: "15px",
-          width: "80%",
-          height: "6px",
-          background: "#ccc",
-          borderRadius: "3px",
-          position: "relative",
-          marginInline: "auto",
-          cursor: "pointer",
-        }}
-        onClick={handleSeek}
-      >
-        <div
-          style={{
-            position: "absolute",
-            height: "100%",
-            width: `${(elapsed / duration) * 100}%`,
-            background: "#333",
-            borderRadius: "3px",
-            transition: "width 0.3s linear",
-          }}
-        ></div>
+    <div style={{ padding: "16px", textAlign: "center" }}>
+      <h1 style={{ fontSize: "24px", fontWeight: "bold", marginBottom: "12px" }}>
+        {artwork.title} — 3D View
+      </h1>
+
+      <div style={{ height: "500px", width: "100%", background: "#111" }}>
+        <Canvas camera={{ position: [0, 0, 5], fov: 50 }}>
+          <ambientLight intensity={0.5} />
+          <directionalLight position={[5, 5, 5]} />
+          <Suspense fallback={null}>
+            {artwork.modelUrl ? (
+              <Model url={artwork.modelUrl} />
+            ) : (
+              <mesh>
+                <boxGeometry />
+                <meshStandardMaterial color="hotpink" />
+              </mesh>
+            )}
+          </Suspense>
+          <OrbitControls />
+        </Canvas>
       </div>
-      <p style={{ marginTop: "8px", fontSize: "14px" }}>
-        {formatTime(elapsed)} / {formatTime(duration)}
-      </p>
     </div>
   );
 };
 
-export default VoicePlayer;
+export default Artwork3DView;
