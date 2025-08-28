@@ -18,13 +18,13 @@ const Artwork3DView = () => {
 
   const [showDescription, setShowDescription] = useState(false);
 
-  // AI Voice Player states
+  // Voice player states
   const synthRef = useRef(window.speechSynthesis);
   const utteranceRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [progress, setProgress] = useState(0); // %
-  const [duration, setDuration] = useState(0); // in seconds
-  const [currentTime, setCurrentTime] = useState(0); // in seconds
+  const [progress, setProgress] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
   const [finished, setFinished] = useState(false);
 
   const baseUrl =
@@ -36,7 +36,7 @@ const Artwork3DView = () => {
     return url.startsWith("http") ? url : `${baseUrl}${url}`;
   };
 
-  // Fetch artwork data
+  // Fetch artwork details
   useEffect(() => {
     const fetchArtwork = async () => {
       try {
@@ -70,18 +70,15 @@ const Artwork3DView = () => {
     fetchArtwork();
   }, [id]);
 
-  // Estimate duration (roughly 150 words per minute)
   const estimateDuration = (text) => {
     if (!text) return 0;
     const words = text.trim().split(/\s+/).length;
-    return Math.ceil((words / 150) * 60);
+    return Math.ceil((words / 150) * 60); // 150 WPM ~ duration in seconds
   };
 
-  // Start or resume voice narration
   const startVoice = () => {
     if (!artwork?.description) return;
 
-    // Reset if finished
     if (finished) {
       synthRef.current.cancel();
       setFinished(false);
@@ -93,13 +90,12 @@ const Artwork3DView = () => {
       utteranceRef.current = new SpeechSynthesisUtterance(artwork.description);
       utteranceRef.current.lang = "en-US";
 
-      // Event listeners
       utteranceRef.current.onstart = () => {
         setIsPlaying(true);
-        setFinished(false);
         setDuration(estimateDuration(artwork.description));
         setCurrentTime(0);
         setProgress(0);
+        setFinished(false);
       };
 
       utteranceRef.current.onend = () => {
@@ -126,16 +122,32 @@ const Artwork3DView = () => {
     }
   };
 
-  // Pause voice narration
   const pauseVoice = () => {
     synthRef.current.pause();
     setIsPlaying(false);
   };
 
-  // Stop narration on unmount
   useEffect(() => {
     return () => synthRef.current.cancel();
   }, []);
+
+  const handleProgressClick = (e) => {
+    const rect = e.target.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const width = rect.width;
+    const newProgress = (clickX / width) * 100;
+    setProgress(newProgress);
+
+    // Simulate seeking (restart narration from beginning)
+    if (artwork?.description) {
+      synthRef.current.cancel();
+      utteranceRef.current = null;
+      setFinished(false);
+      setCurrentTime(0);
+      setProgress(0);
+      startVoice();
+    }
+  };
 
   if (loading) return <p style={{ textAlign: "center" }}>Loading 3D model...</p>;
   if (error) return <p style={{ color: "red", textAlign: "center" }}>{error}</p>;
@@ -163,68 +175,78 @@ const Artwork3DView = () => {
           <OrbitControls />
         </Canvas>
 
-        {/* Voice player controls */}
-        {artwork.description && (
-          <div style={{ marginTop: "16px" }}>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                gap: "12px",
-              }}
-            >
-              {isPlaying ? (
-                <PauseCircle size={36} onClick={pauseVoice} />
-              ) : (
-                <PlayCircle size={36} onClick={startVoice} />
-              )}
-              <span>
-                {Math.floor(currentTime)}s / {duration}s
-              </span>
-            </div>
-            <div
-              style={{
-                width: "80%",
-                height: "8px",
-                background: "#ddd",
-                margin: "10px auto",
-                borderRadius: "4px",
-                overflow: "hidden",
-              }}
-            >
+        {showDescription && (
+          <div
+            className="desc-card"
+            style={{
+              marginTop: "16px",
+              padding: "16px",
+              border: "1px solid #ddd",
+              borderRadius: "12px",
+              background: "#f9f9f9",
+            }}
+          >
+            <h3>{artwork.title}</h3>
+            <h4>{artwork.artist}</h4>
+            <p style={{ marginBottom: "12px" }}>{artwork.description}</p>
+
+            {/* Voice player inside box */}
+            <div style={{ marginTop: "10px" }}>
               <div
                 style={{
-                  width: `${progress}%`,
-                  height: "100%",
-                  background: "#4cafef",
-                  transition: "width 0.2s",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  gap: "12px",
+                  marginBottom: "8px",
                 }}
-              ></div>
+              >
+                {isPlaying ? (
+                  <PauseCircle size={36} onClick={pauseVoice} />
+                ) : (
+                  <PlayCircle size={36} onClick={startVoice} />
+                )}
+                <span>
+                  {Math.floor(currentTime)}s / {duration}s
+                </span>
+              </div>
+              <div
+                style={{
+                  width: "100%",
+                  height: "8px",
+                  background: "#ddd",
+                  borderRadius: "4px",
+                  overflow: "hidden",
+                  cursor: "pointer",
+                }}
+                onClick={handleProgressClick}
+              >
+                <div
+                  style={{
+                    width: `${progress}%`,
+                    height: "100%",
+                    background: "#4cafef",
+                    transition: "width 0.2s",
+                  }}
+                ></div>
+              </div>
+            </div>
+
+            <div style={{ marginTop: "12px" }}>
+              <ArrowDownCircle
+                size={32}
+                onClick={() => setShowDescription(false)}
+                style={{ cursor: "pointer" }}
+              />
             </div>
           </div>
         )}
 
-        {/* Description buttons */}
         {!showDescription && (
           <div className="desc-cardsmall">
             <div className="buttons-bar">
               <ArrowUpCircle size={32} onClick={() => setShowDescription(true)} />
             </div>
-          </div>
-        )}
-
-        {showDescription && (
-          <div className="desc-card">
-            <div className="buttons-bar">
-              <ArrowDownCircle
-                size={32}
-                onClick={() => setShowDescription(false)}
-              />
-            </div>
-            <h3>{artwork.title}</h3>
-            <h4>{artwork.artist}</h4>
-            <p>{artwork.description}</p>
           </div>
         )}
       </div>
