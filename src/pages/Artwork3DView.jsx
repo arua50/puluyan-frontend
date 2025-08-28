@@ -39,13 +39,17 @@ const Artwork3DView = () => {
         const item = json.data[0];
 
         if (!item) throw new Error("Artwork not found");
-
+        setTitle(art.art_title || "Untitled");
+        setArtist(art.artist || "Unknown artist");
+        setDescription(art.art_description || "No description available.");
+        setShowDescription(false);
+        speak(art.art_description);
         setArtwork({
           id: item.id,
           title: item.art_title || "Untitled",
           modelUrl: getFileUrl(item.model3D), // <-- field in Strapi (make sure it matches!)
           imageUrl: getFileUrl(item.art_image),
-        });
+          });
       } catch (err) {
         console.error(err);
         setError("Could not load 3D model.");
