@@ -1,6 +1,6 @@
 // src/pages/Artwork3DView.jsx
 import React, { useEffect, useState, Suspense, useRef } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, useGLTF } from "@react-three/drei";
 import { PlayCircle, PauseCircle, ArrowUpCircle, ArrowDownCircle } from "lucide-react";
@@ -22,6 +22,7 @@ const Artwork3DView = () => {
   const synthRef = useRef(window.speechSynthesis);
   const utteranceRef = useRef(null);
 
+  // Base URL for API
   const baseUrl =
     import.meta.env.VITE_API_URL || process.env.REACT_APP_API_URL || "";
 
@@ -31,7 +32,7 @@ const Artwork3DView = () => {
     return url.startsWith("http") ? url : `${baseUrl}${url}`;
   };
 
-  // Fetch artwork data from Strapi
+  // Fetch artwork details
   useEffect(() => {
     const fetchArtwork = async () => {
       try {
@@ -48,11 +49,11 @@ const Artwork3DView = () => {
 
         setArtwork({
           id: item.id,
-          title: item.attributes?.art_title || "Untitled",
-          artist: item.attributes?.artist || "Unknown Artist",
-          description: item.attributes?.art_description || "No description available.",
-          modelUrl: getFileUrl(item.attributes?.model3D),
-          imageUrl: getFileUrl(item.attributes?.art_image),
+          title: item.art_title || "Untitled",
+          artist: item.artist || "Unknown Artist",
+          description: item.art_description || "No description available.",
+          modelUrl: getFileUrl(item.model3D),
+          imageUrl: getFileUrl(item.art_image),
         });
       } catch (err) {
         console.error(err);
@@ -65,7 +66,7 @@ const Artwork3DView = () => {
     fetchArtwork();
   }, [id]);
 
-  // Voice controls
+  // Voice controls for description
   const toggleVoice = () => {
     if (!artwork?.description) return;
 
@@ -84,7 +85,7 @@ const Artwork3DView = () => {
     }
   };
 
-  // Stop voice on component unmount
+  // Stop narration when component unmounts
   useEffect(() => {
     return () => {
       synthRef.current.cancel();
@@ -117,7 +118,7 @@ const Artwork3DView = () => {
           <OrbitControls />
         </Canvas>
 
-        {/* Description Buttons Bar - collapsed */}
+        {/* Description buttons bar (collapsed) */}
         {artwork.description && !showDescription && (
           <div className="desc-cardsmall">
             <div className="buttons-bar">
@@ -134,7 +135,7 @@ const Artwork3DView = () => {
           </div>
         )}
 
-        {/* Description Panel - expanded */}
+        {/* Description panel (expanded) */}
         {showDescription && (
           <div className="desc-card">
             <div className="buttons-bar">
