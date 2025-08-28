@@ -1,8 +1,9 @@
 // src/pages/Artwork3DView.jsx
-import React, { useEffect, useState, Suspense } from "react";
+import React, { useEffect, useState, Suspense, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, useGLTF } from "@react-three/drei";
+import { PlayCircle, PauseCircle, ArrowUpCircle, ArrowDownCircle } from "lucide-react";
 
 const Model = ({ url }) => {
   const { scene } = useGLTF(url);
@@ -15,22 +16,27 @@ const Artwork3DView = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Get API base URL from env
+  const [showDescription, setShowDescription] = useState(false);
+  const [isPaused, setIsPaused] = useState(true);
+
+  const synthRef = useRef(window.speechSynthesis);
+  const utteranceRef = useRef(null);
+
   const baseUrl =
     import.meta.env.VITE_API_URL || process.env.REACT_APP_API_URL || "";
 
   const getFileUrl = (file) => {
     const url = file?.url || file?.data?.attributes?.url;
     if (!url) return null;
-    if (url.startsWith("http")) return url;
-    return `${baseUrl}${url}`;
+    return url.startsWith("http") ? url : `${baseUrl}${url}`;
   };
 
+  // Fetch artwork data from Strapi
   useEffect(() => {
     const fetchArtwork = async () => {
       try {
         const response = await fetch(
-        `https://puluyanartgallery.onrender.com/api/artworks?filters[id][$eq]=${id}&populate=*`        
+          `https://puluyanartgallery.onrender.com/api/artworks?filters[id][$eq]=${id}&populate=*`
         );
 
         if (!response.ok) throw new Error("Failed to fetch artwork");
@@ -39,17 +45,15 @@ const Artwork3DView = () => {
         const item = json.data[0];
 
         if (!item) throw new Error("Artwork not found");
-        setTitle(art.art_title || "Untitled");
-        setArtist(art.artist || "Unknown artist");
-        setDescription(art.art_description || "No description available.");
-        setShowDescription(false);
-        speak(art.art_description);
+
         setArtwork({
           id: item.id,
-          title: item.art_title || "Untitled",
-          modelUrl: getFileUrl(item.model3D), // <-- field in Strapi (make sure it matches!)
-          imageUrl: getFileUrl(item.art_image),
-          });
+          title: item.attributes?.art_title || "Untitled",
+          artist: item.attributes?.artist || "Unknown Artist",
+          description: item.attributes?.art_description || "No description available.",
+          modelUrl: getFileUrl(item.attributes?.model3D),
+          imageUrl: getFileUrl(item.attributes?.art_image),
+        });
       } catch (err) {
         console.error(err);
         setError("Could not load 3D model.");
@@ -60,6 +64,32 @@ const Artwork3DView = () => {
 
     fetchArtwork();
   }, [id]);
+
+  // Voice controls
+  const toggleVoice = () => {
+    if (!artwork?.description) return;
+
+    if (isPaused) {
+      if (!utteranceRef.current) {
+        utteranceRef.current = new SpeechSynthesisUtterance(artwork.description);
+        utteranceRef.current.lang = "en-US";
+        synthRef.current.speak(utteranceRef.current);
+      } else {
+        synthRef.current.resume();
+      }
+      setIsPaused(false);
+    } else {
+      synthRef.current.pause();
+      setIsPaused(true);
+    }
+  };
+
+  // Stop voice on component unmount
+  useEffect(() => {
+    return () => {
+      synthRef.current.cancel();
+    };
+  }, []);
 
   if (loading) return <p style={{ textAlign: "center" }}>Loading 3D model...</p>;
   if (error) return <p style={{ color: "red", textAlign: "center" }}>{error}</p>;
@@ -87,37 +117,40 @@ const Artwork3DView = () => {
           <OrbitControls />
         </Canvas>
 
-          {/* 2 ▸ buttons bar (description hidden) */}
-        {description && !showDescription && (
+        {/* Description Buttons Bar - collapsed */}
+        {artwork.description && !showDescription && (
           <div className="desc-cardsmall">
             <div className="buttons-bar">
-              <div onClick={toggleVoice}>{isPaused ? <PlayCircle size={32}/> : <PauseCircle size={32}/>}</div>
+              <div onClick={toggleVoice}>
+                {isPaused ? <PlayCircle size={32} /> : <PauseCircle size={32} />}
+              </div>
               <div
                 onClick={() => setShowDescription(true)}
                 title="Show description"
               >
-                <ArrowUpCircle size={32}/>
-               
+                <ArrowUpCircle size={32} />
               </div>
             </div>
           </div>
         )}
 
-        {/* 3 ▸ description card */}
+        {/* Description Panel - expanded */}
         {showDescription && (
           <div className="desc-card">
             <div className="buttons-bar">
-              <div onClick={toggleVoice}>{isPaused ? <PlayCircle size={32}/> : <PauseCircle size={32}/>}</div>
+              <div onClick={toggleVoice}>
+                {isPaused ? <PlayCircle size={32} /> : <PauseCircle size={32} />}
+              </div>
               <div
                 onClick={() => setShowDescription(false)}
                 title="Hide description"
               >
-                <ArrowDownCircle size={32}/>
+                <ArrowDownCircle size={32} />
               </div>
             </div>
-            <h3>{title}</h3>
-            <h4>{artist}</h4>
-            <p>{description}</p>
+            <h3>{artwork.title}</h3>
+            <h4>{artwork.artist}</h4>
+            <p>{artwork.description}</p>
           </div>
         )}
       </div>
