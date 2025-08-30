@@ -52,6 +52,8 @@ const Artwork3DView = () => {
           title: item.art_title || "Untitled",
           artist: item.artist || "Unknown Artist",
           description: item.art_description || "No description available.",
+          saleStat:item.saleStatus || "No Sale Status",
+          price:item. price || "No Price", 
           modelUrl: getFileUrl(item.model3D),
           imageUrl: getFileUrl(item.art_image),
         });
@@ -149,6 +151,8 @@ const Artwork3DView = () => {
                 <ArrowDownCircle size={32} />
               </div>
             </div>
+            <h5>{artwork.saleStat}</h5>
+            <h5>{artwork.price}</h5>
             <h3>{artwork.title}</h3>
             <h4>{artwork.artist}</h4>
             <p>{artwork.description}</p>
