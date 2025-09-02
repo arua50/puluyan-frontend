@@ -6,7 +6,7 @@ import { ArrowDownCircle, ArrowUp01Icon, ArrowUpCircle, LucideTriangle, PauseCir
 
 /* CONFIG */
 const MODEL_URL =
-  "https://teachablemachine.withgoogle.com/models/hTUrBVwHQ/";
+  "https://teachablemachine.withgoogle.com/models/lCqZGEeCd/";
 const API_BASE =
   "https://puluyanartgallery.onrender.com/api/artworks?populate=*";
 
