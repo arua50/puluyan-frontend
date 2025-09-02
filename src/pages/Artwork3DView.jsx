@@ -151,8 +151,22 @@ const Artwork3DView = () => {
                 <ArrowDownCircle size={32} />
               </div>
             </div>
-            <h5>{artwork.saleStat}</h5>
-            <h5>{artwork.price}</h5>
+              <div className="sale-info">
+                {artwork.saleStat === "onSale" ? (
+                  <>
+                    <h5 style={{ color: "green", fontWeight: "bold" }}>For Sale</h5>
+                    <h5 style={{ color: "black" }}>
+                      Price: {artwork.price ? `₱${artwork.price}` : "Contact for price"}
+                    </h5>
+                  </>
+                ) : artwork.saleStat === "notForSale" ? (
+                  <h5 style={{ color: "gray", fontWeight: "bold" }}>Not for Sale</h5>
+                ) : artwork.saleStat === "sold" ? (
+                  <h5 style={{ color: "red", fontWeight: "bold" }}>Sold</h5>
+                ) : (
+                  <h5 style={{ color: "gray" }}>Sale status unknown</h5>
+                )}
+              </div>
             <h3>{artwork.title}</h3>
             <h4>{artwork.artist}</h4>
             <p>{artwork.description}</p>
