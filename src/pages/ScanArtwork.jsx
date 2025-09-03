@@ -10,7 +10,6 @@ import {
   SwitchCamera,
 } from "lucide-react";
 
-/* CONFIG */
 const MODEL_URL = "https://teachablemachine.withgoogle.com/models/lCqZGEeCd/";
 const API_BASE =
   "https://puluyanartgallery.onrender.com/api/artworks?populate=*";
@@ -19,7 +18,6 @@ const ScanArtwork = () => {
   const webcamRef = useRef(null);
   const pollRef = useRef(null);
 
-  /* State */
   const [model, setModel] = useState(null);
   const [maxPrediction, setMaxPrediction] = useState(null);
   const [artwork, setArtwork] = useState(null);
@@ -30,10 +28,9 @@ const ScanArtwork = () => {
 
   const [showDescription, setShowDescription] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-
   const [facingMode, setFacingMode] = useState("environment");
 
-  /* Load model */
+  /* Load Teachable Machine model */
   useEffect(() => {
     (async () => {
       try {
@@ -42,13 +39,13 @@ const ScanArtwork = () => {
           `${MODEL_URL}metadata.json`
         );
         setModel(m);
-      } catch (e) {
-        console.error("TM load error", e);
+      } catch (err) {
+        console.error("Error loading model:", err);
       }
     })();
   }, []);
 
-  /* Start polling */
+  /* Start periodic predictions */
   useEffect(() => {
     if (!model) return;
     pollRef.current = setInterval(() => predict(model), 3000);
@@ -56,28 +53,29 @@ const ScanArtwork = () => {
       clearInterval(pollRef.current);
       window.speechSynthesis.cancel();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [model]);
 
-  /* Predict */
+  /* Predict artwork from webcam */
   const predict = async (m) => {
     if (!webcamRef.current?.video) return;
     if (webcamRef.current.video.readyState !== 4) return;
+
     try {
-      const preds = await m.predict(webcamRef.current.video);
-      const highest = preds.reduce((a, b) =>
+      const predictions = await m.predict(webcamRef.current.video);
+      const highest = predictions.reduce((a, b) =>
         a.probability > b.probability ? a : b
       );
+
       if (highest.probability > 0.9 && highest.className !== maxPrediction) {
         setMaxPrediction(highest.className);
-        await fetchArtwork(highest.className);
+        fetchArtwork(highest.className);
       }
-    } catch (e) {
-      console.error("Prediction error", e);
+    } catch (err) {
+      console.error("Prediction error:", err);
     }
   };
 
-  /* Fetch artwork */
+  /* Fetch artwork from API */
   const fetchArtwork = async (label) => {
     try {
       const res = await fetch(`${API_BASE}&filters[slug][$eq]=${label}`);
@@ -87,10 +85,10 @@ const ScanArtwork = () => {
         const art = json.data[0];
         setArtwork(art);
         setTitle(art.art_title || "Untitled");
-        setArtist(art.artist || "Unknown artist");
+        setArtist(art.artist || "Unknown Artist");
         setDescription(art.art_description || "No description available.");
         setShowDescription(false);
-        speak(art.art_description);
+        speak(art.art_description || "No description available.");
       } else {
         setArtwork(null);
         setTitle("");
@@ -99,39 +97,41 @@ const ScanArtwork = () => {
         setShowDescription(true);
         speak("Artwork not found.");
       }
-    } catch (e) {
-      console.error("API error", e);
+    } catch (err) {
+      console.error("API Fetch Error:", err);
     }
   };
 
-  /* Voice utils */
-  const speak = (txt) => {
+  /* Voice synthesis */
+  const speak = (text) => {
     window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(txt);
-    u.lang = "en-US";
-    u.onend = () => setIsPaused(false);
-    window.speechSynthesis.speak(u);
+    if (!text) return;
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = "en-US";
+    utter.onend = () => setIsPaused(false);
+    window.speechSynthesis.speak(utter);
   };
 
   const toggleVoice = () => {
+    if (!window.speechSynthesis.speaking) return;
     if (window.speechSynthesis.paused) {
       window.speechSynthesis.resume();
       setIsPaused(false);
-    } else if (window.speechSynthesis.speaking) {
+    } else {
       window.speechSynthesis.pause();
       setIsPaused(true);
     }
   };
 
-  /* Switch camera */
+  /* Switch front/back camera */
   const switchCamera = useCallback(() => {
     setFacingMode((prev) => (prev === "user" ? "environment" : "user"));
   }, []);
 
-  /* Render */
   return (
     <div className="text-center">
       <div className="scan-wrapper">
+        {/* Camera Feed */}
         <Webcam
           ref={webcamRef}
           screenshotFormat="image/jpeg"
@@ -139,23 +139,18 @@ const ScanArtwork = () => {
           className="webcam-view"
         />
 
-        {/* 1 ▸ scanning overlay */}
+        {/* Overlay for scanning */}
         {!description && (
           <>
             <div className="bl" />
             <div className="tr" />
-
-            <button
-              className="cam-flip-btn"
-              onClick={switchCamera}
-              title="Switch camera"
-            >
+            <button className="cam-flip-btn" onClick={switchCamera}>
               <SwitchCamera />
             </button>
           </>
         )}
 
-        {/* 2 ▸ buttons bar (description collapsed) */}
+        {/* Collapsed card */}
         {description && !showDescription && (
           <div className="desc-cardsmall">
             <div className="buttons-bar">
@@ -164,7 +159,7 @@ const ScanArtwork = () => {
               </div>
               <div
                 onClick={() => setShowDescription(true)}
-                title="Show description"
+                style={{ cursor: "pointer" }}
               >
                 <ArrowUpCircle size={32} />
               </div>
@@ -172,7 +167,7 @@ const ScanArtwork = () => {
           </div>
         )}
 
-        {/* 3 ▸ description card */}
+        {/* Expanded description card */}
         {showDescription && (
           <div className="desc-card">
             <div className="buttons-bar">
@@ -181,13 +176,13 @@ const ScanArtwork = () => {
               </div>
               <div
                 onClick={() => setShowDescription(false)}
-                title="Hide description"
+                style={{ cursor: "pointer" }}
               >
                 <ArrowDownCircle size={32} />
               </div>
             </div>
 
-            {/* Sale status (right-aligned) */}
+            {/* Sale Status */}
             <div className="sale-status">
               {artwork?.saleStat === "onSale" ? (
                 <>
