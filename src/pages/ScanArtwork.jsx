@@ -106,43 +106,31 @@ const ScanArtwork = () => {
     }
   };
 
-  /* Voice synthesis logic */
-  const playVoice = (text) => {
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    speechRef.current = utterance;
+  /* Voice control */
+const toggleVoice = () => {
+    if (!artwork?.description) return;
 
-    utterance.lang = "en-US";
-    utterance.onstart = () => {
-      setIsSpeaking(true);
-      setIsPaused(false);
-    };
-    utterance.onend = () => {
-      setIsSpeaking(false);
-      setIsPaused(false);
-    };
-
-    window.speechSynthesis.speak(utterance);
-  };
-
-  const toggleVoice = () => {
-    if (!speechRef.current) return;
-
-    if (window.speechSynthesis.speaking) {
-      if (isPaused) {
-        window.speechSynthesis.resume();
-        setIsPaused(false);
+    if (isPaused) {
+      if (!utteranceRef.current) {
+        utteranceRef.current = new SpeechSynthesisUtterance(artwork.description);
+        utteranceRef.current.lang = "en-US";
+        synthRef.current.speak(utteranceRef.current);
       } else {
-        window.speechSynthesis.pause();
-        setIsPaused(true);
+        synthRef.current.resume();
       }
+      setIsPaused(false);
     } else {
-      // Replay the description
-      if (artwork?.description) {
-        playVoice(artwork.description);
-      }
+      synthRef.current.pause();
+      setIsPaused(true);
     }
   };
+
+  // Stop narration when component unmounts
+    useEffect(() => {
+      return () => {
+        synthRef.current.cancel();
+      };
+    }, []);
 
   /* Switch camera between front and back */
   const switchCamera = useCallback(() => {
@@ -200,13 +188,9 @@ const ScanArtwork = () => {
         {showDescription && (
           <div className="desc-card">
             <div className="buttons-bar">
-              <div onClick={toggleVoice}>
-                {isPaused || !isSpeaking ? (
-                  <PlayCircle size={32} />
-                ) : (
-                  <PauseCircle size={32} />
-                )}
-              </div>
+            <div onClick={toggleVoice}>
+               {isPaused ? <PlayCircle size={32} /> : <PauseCircle size={32} />}
+            </div>
               <div
                 onClick={() => setShowDescription(false)}
                 title="Hide description"
@@ -215,23 +199,23 @@ const ScanArtwork = () => {
               </div>
             </div>
 
-            {/* Sale status */}
-            <div className="sale-status">
-              {artwork?.saleStat === "onSale" ? (
-                <>
-                  <span className="status on-sale">For Sale</span>
-                  <span className="price">
-                    ₱{artwork?.price || "Contact for price"}
-                  </span>
-                </>
-              ) : artwork?.saleStat === "notForSale" ? (
-                <span className="status not-sale">Not for Sale</span>
-              ) : artwork?.saleStat === "sold" ? (
-                <span className="status sold">Sold</span>
-              ) : (
-                <span className="status unknown">Status Unknown</span>
-              )}
-            </div>
+           {/*sale stat  */}
+              <div className="sale-info">
+                {artwork.saleStat === "onSale" ? (
+                  <>
+                    <h5 style={{ color: "white", fontWeight: "bold" }}>For Sale</h5>
+                    <h5 style={{ color: "white" }}>
+                      Price: {artwork.price ? `₱${artwork.price}` : "Contact for price"}
+                    </h5>
+                  </>
+                ) : artwork.saleStat === "notForSale" ? (
+                  <h5 style={{ color: "gray", fontWeight: "bold" }}>Not for Sale</h5>
+                ) : artwork.saleStat === "sold" ? (
+                  <h5 style={{ color: "red", fontWeight: "bold" }}>Sold</h5>
+                ) : (
+                  <h5 style={{ color: "gray" }}>Sale status unknown</h5>
+                )}
+              </div>
 
             <h3>{artwork?.title}</h3>
             <h4>{artwork?.artist}</h4>
