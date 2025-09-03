@@ -18,7 +18,10 @@ const API_BASE =
 const ScanArtwork = () => {
   const webcamRef = useRef(null);
   const pollRef = useRef(null);
-  const speechRef = useRef(null);
+
+  // Refs for speech synthesis
+  const utteranceRef = useRef(null);
+  const synthRef = useRef(window.speechSynthesis);
 
   /* State */
   const [model, setModel] = useState(null);
@@ -52,7 +55,7 @@ const ScanArtwork = () => {
     pollRef.current = setInterval(() => predict(model), 3000);
     return () => {
       clearInterval(pollRef.current);
-      window.speechSynthesis.cancel();
+      synthRef.current.cancel();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [model]);
@@ -106,30 +109,55 @@ const ScanArtwork = () => {
     }
   };
 
-  /* Voice control */
-const toggleVoice = () => {
+  /* Play AI voice narration */
+  const playVoice = (text) => {
+    if (!text) return;
 
-    if (isPaused) {
-      if (!utteranceRef.current) {
-        utteranceRef.current = new SpeechSynthesisUtterance(artwork.description);
-        utteranceRef.current.lang = "en-US";
-        synthRef.current.speak(utteranceRef.current);
-      } else {
-        synthRef.current.resume();
-      }
+    // Cancel any current speech
+    synthRef.current.cancel();
+
+    // Create new utterance
+    utteranceRef.current = new SpeechSynthesisUtterance(text);
+    utteranceRef.current.lang = "en-US";
+
+    utteranceRef.current.onstart = () => {
+      setIsSpeaking(true);
       setIsPaused(false);
-    } else {
+    };
+
+    utteranceRef.current.onend = () => {
+      setIsSpeaking(false);
+      setIsPaused(false);
+    };
+
+    utteranceRef.current.onerror = () => {
+      setIsSpeaking(false);
+    };
+
+    synthRef.current.speak(utteranceRef.current);
+  };
+
+  /* Toggle play/pause */
+  const toggleVoice = () => {
+    if (!artwork?.description) return;
+
+    if (isSpeaking && !isPaused) {
       synthRef.current.pause();
       setIsPaused(true);
+    } else if (isPaused) {
+      synthRef.current.resume();
+      setIsPaused(false);
+    } else {
+      playVoice(artwork.description);
     }
   };
 
   // Stop narration when component unmounts
-    useEffect(() => {
-      return () => {
-        synthRef.current.cancel();
-      };
-    }, []);
+  useEffect(() => {
+    return () => {
+      synthRef.current.cancel();
+    };
+  }, []);
 
   /* Switch camera between front and back */
   const switchCamera = useCallback(() => {
@@ -187,9 +215,13 @@ const toggleVoice = () => {
         {showDescription && (
           <div className="desc-card">
             <div className="buttons-bar">
-            <div onClick={toggleVoice}>
-               {isPaused ? <PlayCircle size={32} /> : <PauseCircle size={32} />}
-            </div>
+              <div onClick={toggleVoice}>
+                {isPaused || !isSpeaking ? (
+                  <PlayCircle size={32} />
+                ) : (
+                  <PauseCircle size={32} />
+                )}
+              </div>
               <div
                 onClick={() => setShowDescription(false)}
                 title="Hide description"
@@ -198,23 +230,23 @@ const toggleVoice = () => {
               </div>
             </div>
 
-           {/*sale stat  */}
-              <div className="sale-info">
-                {artwork.saleStat === "onSale" ? (
-                  <>
-                    <h5 style={{ color: "white", fontWeight: "bold" }}>For Sale</h5>
-                    <h5 style={{ color: "white" }}>
-                      Price: {artwork.price ? `₱${artwork.price}` : "Contact for price"}
-                    </h5>
-                  </>
-                ) : artwork.saleStat === "notForSale" ? (
-                  <h5 style={{ color: "gray", fontWeight: "bold" }}>Not for Sale</h5>
-                ) : artwork.saleStat === "sold" ? (
-                  <h5 style={{ color: "red", fontWeight: "bold" }}>Sold</h5>
-                ) : (
-                  <h5 style={{ color: "gray" }}>Sale status unknown</h5>
-                )}
-              </div>
+            {/* Sale status */}
+            <div className="sale-info">
+              {artwork.saleStat === "onSale" ? (
+                <>
+                  <h5 style={{ color: "white", fontWeight: "bold" }}>For Sale</h5>
+                  <h5 style={{ color: "white" }}>
+                    Price: {artwork.price ? `₱${artwork.price}` : "Contact for price"}
+                  </h5>
+                </>
+              ) : artwork.saleStat === "notForSale" ? (
+                <h5 style={{ color: "gray", fontWeight: "bold" }}>Not for Sale</h5>
+              ) : artwork.saleStat === "sold" ? (
+                <h5 style={{ color: "red", fontWeight: "bold" }}>Sold</h5>
+              ) : (
+                <h5 style={{ color: "gray" }}>Sale status unknown</h5>
+              )}
+            </div>
 
             <h3>{artwork?.title}</h3>
             <h4>{artwork?.artist}</h4>
