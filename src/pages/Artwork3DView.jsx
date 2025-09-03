@@ -1,180 +1,217 @@
-// src/pages/Artwork3DView.jsx
-import React, { useEffect, useState, Suspense, useRef } from "react";
-import { useParams } from "react-router-dom";
-import { Canvas } from "@react-three/fiber";
-import { OrbitControls, useGLTF } from "@react-three/drei";
-import { PlayCircle, PauseCircle, ArrowUpCircle, ArrowDownCircle } from "lucide-react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import Webcam from "react-webcam";
+import * as tmImage from "@teachablemachine/image";
+import "./ScanArtwork.css";
+import { ArrowDownCircle, ArrowUp01Icon, ArrowUpCircle, LucideTriangle, PauseCircle, PlayCircle, SwitchCamera, Triangle, TriangleDashed, TriangleIcon } from "lucide-react";
 
-const Model = ({ url }) => {
-  const { scene } = useGLTF(url);
-  return <primitive object={scene} scale={1.5} />;
-};
+/* CONFIG */
+const MODEL_URL =
+  "https://teachablemachine.withgoogle.com/models/lCqZGEeCd/";
+const API_BASE =
+  "https://puluyanartgallery.onrender.com/api/artworks?populate=*";
 
-const Artwork3DView = () => {
-  const { id } = useParams();
-  const [artwork, setArtwork] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+const ScanArtwork = () => {
+  const webcamRef = useRef(null);
+  const pollRef = useRef(null);
+
+  /* state */
+  const [model, setModel] = useState(null);
+  const [maxPrediction, setMaxPrediction] = useState(null);
+
+  const [title, setTitle] = useState("");
+  const [artist, setArtist] = useState("");
+  const [description, setDescription] = useState("");
 
   const [showDescription, setShowDescription] = useState(false);
-  const [isPaused, setIsPaused] = useState(true);
+  const [isPaused, setIsPaused] = useState(false);
 
-  const synthRef = useRef(window.speechSynthesis);
-  const utteranceRef = useRef(null);
+  // NEW — camera facingMode
+  const [facingMode, setFacingMode] = useState("environment"); // or "user"
 
-  // Base URL for API
-  const baseUrl =
-    import.meta.env.VITE_API_URL || process.env.REACT_APP_API_URL || "";
+  /* load model */
+  useEffect(() => {
+    (async () => {
+      try {
+        const m = await tmImage.load(
+          `${MODEL_URL}model.json`,
+          `${MODEL_URL}metadata.json`
+        );
+        setModel(m);
+      } catch (e) {
+        console.error("TM load error", e);
+      }
+    })();
+  }, []);
 
-  const getFileUrl = (file) => {
-    const url = file?.url || file?.data?.attributes?.url;
-    if (!url) return null;
-    return url.startsWith("http") ? url : `${baseUrl}${url}`;
+  /* start polling */
+  useEffect(() => {
+    if (!model) return;
+    pollRef.current = setInterval(() => predict(model), 3000);
+    return () => {
+      clearInterval(pollRef.current);
+      window.speechSynthesis.cancel();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [model]);
+
+  /* predict */
+  const predict = async (m) => {
+    if (!webcamRef.current?.video) return;
+    if (webcamRef.current.video.readyState !== 4) return;
+    try {
+      const preds = await m.predict(webcamRef.current.video);
+      const highest = preds.reduce((a, b) =>
+        a.probability > b.probability ? a : b
+      );
+      if (highest.probability > 0.9 && highest.className !== maxPrediction) {
+        setMaxPrediction(highest.className);
+        await fetchArtwork(highest.className);
+      }
+    } catch (e) {
+      console.error("Prediction error", e);
+    }
   };
 
-  // Fetch artwork details
-  useEffect(() => {
-    const fetchArtwork = async () => {
-      try {
-        const response = await fetch(
-          `https://puluyanartgallery.onrender.com/api/artworks?filters[id][$eq]=${id}&populate=*`
-        );
-
-        if (!response.ok) throw new Error("Failed to fetch artwork");
-
-        const json = await response.json();
-        const item = json.data[0];
-
-        if (!item) throw new Error("Artwork not found");
-
-        setArtwork({
-          id: item.id,
-          title: item.art_title || "Untitled",
-          artist: item.artist || "Unknown Artist",
-          description: item.art_description || "No description available.",
-          saleStat:item.saleStatus || "No Sale Status",
-          price:item. price || "No Price", 
-          modelUrl: getFileUrl(item.model3D),
-          imageUrl: getFileUrl(item.art_image),
-        });
-      } catch (err) {
-        console.error(err);
-        setError("Could not load 3D model.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchArtwork();
-  }, [id]);
-
-  // Voice controls for description
-  const toggleVoice = () => {
-    if (!artwork?.description) return;
-
-    if (isPaused) {
-      if (!utteranceRef.current) {
-        utteranceRef.current = new SpeechSynthesisUtterance(artwork.description);
-        utteranceRef.current.lang = "en-US";
-        synthRef.current.speak(utteranceRef.current);
+  /* fetch artwork */
+  const fetchArtwork = async (label) => {
+    try {
+      const res = await fetch(`${API_BASE}&filters[slug][$eq]=${label}`);
+      const json = await res.json();
+      if (json.data?.length) {
+        const art = json.data[0];
+        setTitle(art.art_title || "Untitled");
+        setArtist(art.artist || "Unknown artist");
+        setDescription(art.art_description || "No description available.");
+        setShowDescription(false);
+        speak(art.art_description);
       } else {
-        synthRef.current.resume();
+        setTitle("");
+        setArtist("");
+        setDescription("Artwork not found in the database.");
+        setShowDescription(true);
+        speak("Artwork not found.");
       }
+    } catch (e) {
+      console.error("API error", e);
+    }
+  };
+
+  /* voice utils */
+  const speak = (txt) => {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(txt);
+    u.lang = "en-US";
+    u.onend = () => setIsPaused(false);
+    window.speechSynthesis.speak(u);
+  };
+
+  const toggleVoice = () => {
+    if (window.speechSynthesis.paused) {
+      window.speechSynthesis.resume();
       setIsPaused(false);
-    } else {
-      synthRef.current.pause();
+    } else if (window.speechSynthesis.speaking) {
+      window.speechSynthesis.pause();
       setIsPaused(true);
     }
   };
 
-  // Stop narration when component unmounts
-  useEffect(() => {
-    return () => {
-      synthRef.current.cancel();
-    };
+  /* NEW — switch camera */
+  const switchCamera = useCallback(() => {
+    setFacingMode((prev) => (prev === "user" ? "environment" : "user"));
   }, []);
 
-  if (loading) return <p style={{ textAlign: "center" }}>Loading 3D model...</p>;
-  if (error) return <p style={{ color: "red", textAlign: "center" }}>{error}</p>;
-
+  /* render */
   return (
-    <div style={{ padding: "16px", textAlign: "center" }}>
-      <h1 style={{ fontSize: "24px", fontWeight: "bold", marginBottom: "12px" }}>
-        {artwork.title}
-      </h1>
+    <div className="text-center">
+      <div className="scan-wrapper">
+        <Webcam
+          ref={webcamRef}
+          screenshotFormat="image/jpeg"
+          videoConstraints={{ facingMode }}
+          className="webcam-view"
+        />
 
-      <div style={{ height: "500px", width: "100%" }}>
-        <Canvas camera={{ position: [0, 0, 5], fov: 50 }}>
-          <ambientLight intensity={0.5} />
-          <directionalLight position={[5, 5, 5]} />
-          <Suspense fallback={null}>
-            {artwork.modelUrl ? (
-              <Model url={artwork.modelUrl} />
-            ) : (
-              <mesh>
-                <boxGeometry />
-                <meshStandardMaterial color="hotpink" />
-              </mesh>
-            )}
-          </Suspense>
-          <OrbitControls />
-        </Canvas>
+        {/* 1 ▸ scanning overlay */}
+        {!description && (
+          <>
+            
+              <div className="bl" />
+              <div className="tr" />
+           
+            
 
-        {/* Description buttons bar (collapsed) */}
-        {artwork.description && !showDescription && (
+            {/* NEW ▸ camera-flip button (only while scanning) */}
+            <button
+              className="cam-flip-btn"
+              onClick={switchCamera}
+              title="Switch camera"
+            >
+             <SwitchCamera/>
+            </button>
+          </>
+        )}
+
+        {/* 2 ▸ buttons bar (description hidden) */}
+        {description && !showDescription && (
           <div className="desc-cardsmall">
             <div className="buttons-bar">
-              <div onClick={toggleVoice}>
-                {isPaused ? <PlayCircle size={32} /> : <PauseCircle size={32} />}
-              </div>
+              <div onClick={toggleVoice}>{isPaused ? <PlayCircle size={32}/> : <PauseCircle size={32}/>}</div>
               <div
                 onClick={() => setShowDescription(true)}
                 title="Show description"
               >
-                <ArrowUpCircle size={32} />
+                <ArrowUpCircle size={32}/>
+               
               </div>
             </div>
           </div>
         )}
 
-        {/* Description panel (expanded) */}
-        {showDescription && (
-          <div className="desc-card">
-            <div className="buttons-bar">
-              <div onClick={toggleVoice}>
-                {isPaused ? <PlayCircle size={32} /> : <PauseCircle size={32} />}
-              </div>
-              <div
-                onClick={() => setShowDescription(false)}
-                title="Hide description"
-              >
-                <ArrowDownCircle size={32} />
-              </div>
-            </div>
-              <div className="sale-info">
-                {artwork.saleStat === "onSale" ? (
-                  <>
-                    <h5 style={{ color: "green", fontWeight: "bold" }}>For Sale</h5>
-                    <h5 style={{ color: "black" }}>
-                      Price: {artwork.price ? `₱${artwork.price}` : "Contact for price"}
-                    </h5>
-                  </>
-                ) : artwork.saleStat === "notForSale" ? (
-                  <h5 style={{ color: "gray", fontWeight: "bold" }}>Not for Sale</h5>
-                ) : artwork.saleStat === "sold" ? (
-                  <h5 style={{ color: "red", fontWeight: "bold" }}>Sold</h5>
-                ) : (
-                  <h5 style={{ color: "gray" }}>Sale status unknown</h5>
-                )}
-              </div>
-            <h3>{artwork.title}</h3>
-            <h4>{artwork.artist}</h4>
-            <p>{artwork.description}</p>
-          </div>
+       {/* 3 ▸ description card */}
+{showDescription && (
+  <div className="desc-card">
+    <div className="buttons-bar">
+      <div onClick={toggleVoice}>
+        {isPaused ? <PlayCircle size={32} /> : <PauseCircle size={32} />}
+      </div>
+      <div
+        onClick={() => setShowDescription(false)}
+        title="Hide description"
+      >
+        <ArrowDownCircle size={32} />
+      </div>
+    </div>
+
+    <div className="desc-header">
+      <div className="desc-text">
+        <h3>{title}</h3>
+        <h4>{artist}</h4>
+      </div>
+      <div className="sale-status">
+        {artwork?.saleStat === "onSale" ? (
+          <>
+            <span className="status on-sale">For Sale</span>
+            <span className="price">
+              ₱{artwork?.price || "Contact for price"}
+            </span>
+          </>
+        ) : artwork?.saleStat === "notForSale" ? (
+          <span className="status not-sale">Not for Sale</span>
+        ) : artwork?.saleStat === "sold" ? (
+          <span className="status sold">Sold</span>
+        ) : (
+          <span className="status unknown">Status Unknown</span>
         )}
+      </div>
+    </div>
+
+    <p>{description}</p>
+  </div>
+)}
+
       </div>
     </div>
   );
 };
 
-export default Artwork3DView;
+export default ScanArtwork;
