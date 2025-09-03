@@ -137,49 +137,41 @@ const Artwork3DView = () => {
           </div>
         )}
 
-       {/* Description panel (expanded) */}
-{showDescription && (
-  <div className="desc-card">
-    <div className="buttons-bar">
-      <div onClick={toggleVoice}>
-        {isPaused ? <PlayCircle size={32} /> : <PauseCircle size={32} />}
-      </div>
-      <div
-        onClick={() => setShowDescription(false)}
-        title="Hide description"
-      >
-        <ArrowDownCircle size={32} />
-      </div>
-    </div>
-
-    <div className="desc-header">
-      <div className="artwork-info">
-        <h3>{artwork.title}</h3>
-        <h4>{artwork.artist}</h4>
-      </div>
-
-      <div className="sale-info">
-        {artwork.saleStat === "onSale" ? (
-          <>
-            <h5 className="status on-sale">For Sale</h5>
-            <h5 className="price">
-              {artwork.price ? `₱${artwork.price}` : "Contact for price"}
-            </h5>
-          </>
-        ) : artwork.saleStat === "notForSale" ? (
-          <h5 className="status not-sale">Not for Sale</h5>
-        ) : artwork.saleStat === "sold" ? (
-          <h5 className="status sold">Sold</h5>
-        ) : (
-          <h5 className="status unknown">Sale status unknown</h5>
+        {/* Description panel (expanded) */}
+        {showDescription && (
+          <div className="desc-card">
+            <div className="buttons-bar">
+              <div onClick={toggleVoice}>
+                {isPaused ? <PlayCircle size={32} /> : <PauseCircle size={32} />}
+              </div>
+              <div
+                onClick={() => setShowDescription(false)}
+                title="Hide description"
+              >
+                <ArrowDownCircle size={32} />
+              </div>
+            </div>
+              <div className="sale-info">
+                {artwork.saleStat === "onSale" ? (
+                  <>
+                    <h5 style={{ color: "white", fontWeight: "bold" }}>For Sale</h5>
+                    <h5 style={{ color: "white" }}>
+                      Price: {artwork.price ? `₱${artwork.price}` : "Contact for price"}
+                    </h5>
+                  </>
+                ) : artwork.saleStat === "notForSale" ? (
+                  <h5 style={{ color: "gray", fontWeight: "bold" }}>Not for Sale</h5>
+                ) : artwork.saleStat === "sold" ? (
+                  <h5 style={{ color: "red", fontWeight: "bold" }}>Sold</h5>
+                ) : (
+                  <h5 style={{ color: "gray" }}>Sale status unknown</h5>
+                )}
+              </div>
+            <h3>{artwork.title}</h3>
+            <h4>{artwork.artist}</h4>
+            <p>{artwork.description}</p>
+          </div>
         )}
-      </div>
-    </div>
-
-    <p>{artwork.description}</p>
-  </div>
-)}
-
       </div>
     </div>
   );
