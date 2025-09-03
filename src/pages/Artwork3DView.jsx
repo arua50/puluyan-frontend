@@ -75,7 +75,7 @@ const Artwork3DView = () => {
     if (isPaused) {
       if (!utteranceRef.current) {
         utteranceRef.current = new SpeechSynthesisUtterance(artwork.description);
-        utteranceRef.current.lang = "en-US";
+        utteranceRef.current.lang = "tl-PH";
         synthRef.current.speak(utteranceRef.current);
       } else {
         synthRef.current.resume();
@@ -151,6 +151,7 @@ const Artwork3DView = () => {
                 <ArrowDownCircle size={32} />
               </div>
             </div>
+            {/*sale stat  */}
               <div className="sale-info">
                 {artwork.saleStat === "onSale" ? (
                   <>
