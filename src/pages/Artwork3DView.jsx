@@ -167,48 +167,37 @@ const ScanArtwork = () => {
           </div>
         )}
 
-       {/* 3 ▸ description card */}
-{showDescription && (
-  <div className="desc-card">
-    <div className="buttons-bar">
-      <div onClick={toggleVoice}>
-        {isPaused ? <PlayCircle size={32} /> : <PauseCircle size={32} />}
-      </div>
-      <div
-        onClick={() => setShowDescription(false)}
-        title="Hide description"
-      >
-        <ArrowDownCircle size={32} />
-      </div>
-    </div>
-
-    <div className="desc-header">
-      <div className="desc-text">
-        <h3>{title}</h3>
-        <h4>{artist}</h4>
-      </div>
-      <div className="sale-status">
-        {artwork?.saleStat === "onSale" ? (
-          <>
-            <span className="status on-sale">For Sale</span>
-            <span className="price">
-              ₱{artwork?.price || "Contact for price"}
-            </span>
-          </>
-        ) : artwork?.saleStat === "notForSale" ? (
-          <span className="status not-sale">Not for Sale</span>
-        ) : artwork?.saleStat === "sold" ? (
-          <span className="status sold">Sold</span>
-        ) : (
-          <span className="status unknown">Status Unknown</span>
-        )}
-      </div>
-    </div>
-
-    <p>{description}</p>
+        {/* 3 ▸ description card */}
+        {showDescription && (
+          <div className="desc-card">
+            <div className="buttons-bar">
+              <div onClick={toggleVoice}>{isPaused ? <PlayCircle size={32}/> : <PauseCircle size={32}/>}</div>
+              <div
+                onClick={() => setShowDescription(false)}
+                title="Hide description"
+              >
+                <ArrowDownCircle size={32}/>
+              </div>
+            </div>
+             <div className="sale-status">
+    {artwork?.saleStat === "onSale" ? (
+      <>
+        <span className="status on-sale">For Sale</span>
+        <span className="price">₱{artwork?.price || "Contact for price"}</span>
+      </>
+    ) : artwork?.saleStat === "notForSale" ? (
+      <span className="status not-sale">Not for Sale</span>
+    ) : artwork?.saleStat === "sold" ? (
+      <span className="status sold">Sold</span>
+    ) : (
+      <span className="status unknown">Status Unknown</span>
+    )}
   </div>
-)}
-
+            <h3>{title}</h3>
+            <h4>{artist}</h4>
+            <p>{description}</p>
+          </div>
+        )}
       </div>
     </div>
   );
