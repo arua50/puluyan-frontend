@@ -180,3 +180,23 @@ html,
   .desc-card h3 { font-size: 1.5rem; }
   .desc-card p  { font-size: 1.07rem; }
 }
+
+.sale-status {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  text-align: right;
+}
+
+.sale-status .status {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.sale-status .price {
+  display: block;
+  font-size: 0.85rem;
+  margin-top: 4px;
+  opacity: 0.8;
+}
