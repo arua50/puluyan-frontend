@@ -179,12 +179,7 @@ const ScanArtwork = () => {
                 <ArrowDownCircle size={32}/>
               </div>
             </div>
-            <div className="desc-header">
-  <div className="desc-text">
-    <h3>{title}</h3>
-    <h4>{artist}</h4>
-  </div>
-  <div className="sale-status">
+             <div className="sale-status">
     {artwork?.saleStat === "onSale" ? (
       <>
         <span className="status on-sale">For Sale</span>
@@ -198,9 +193,9 @@ const ScanArtwork = () => {
       <span className="status unknown">Status Unknown</span>
     )}
   </div>
-</div>
-<p>{description}</p>
-
+            <h3>{title}</h3>
+            <h4>{artist}</h4>
+            <p>{description}</p>
           </div>
         )}
       </div>
