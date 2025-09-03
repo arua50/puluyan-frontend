@@ -2,33 +2,36 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import Webcam from "react-webcam";
 import * as tmImage from "@teachablemachine/image";
 import "./ScanArtwork.css";
-import { ArrowDownCircle, ArrowUp01Icon, ArrowUpCircle, LucideTriangle, PauseCircle, PlayCircle, SwitchCamera, Triangle, TriangleDashed, TriangleIcon } from "lucide-react";
+import {
+  ArrowDownCircle,
+  ArrowUpCircle,
+  PauseCircle,
+  PlayCircle,
+  SwitchCamera,
+} from "lucide-react";
 
 /* CONFIG */
-const MODEL_URL =
-  "https://teachablemachine.withgoogle.com/models/lCqZGEeCd/";
+const MODEL_URL = "https://teachablemachine.withgoogle.com/models/lCqZGEeCd/";
 const API_BASE =
   "https://puluyanartgallery.onrender.com/api/artworks?populate=*";
 
 const ScanArtwork = () => {
   const webcamRef = useRef(null);
   const pollRef = useRef(null);
+  const speechRef = useRef(null);
 
-  /* state */
+  /* State */
   const [model, setModel] = useState(null);
   const [maxPrediction, setMaxPrediction] = useState(null);
-
-  const [title, setTitle] = useState("");
-  const [artist, setArtist] = useState("");
-  const [description, setDescription] = useState("");
+  const [artwork, setArtwork] = useState(null);
 
   const [showDescription, setShowDescription] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
-  // NEW — camera facingMode
   const [facingMode, setFacingMode] = useState("environment"); // or "user"
 
-  /* load model */
+  /* Load Teachable Machine model */
   useEffect(() => {
     (async () => {
       try {
@@ -43,7 +46,7 @@ const ScanArtwork = () => {
     })();
   }, []);
 
-  /* start polling */
+  /* Start prediction polling */
   useEffect(() => {
     if (!model) return;
     pollRef.current = setInterval(() => predict(model), 3000);
@@ -54,7 +57,7 @@ const ScanArtwork = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [model]);
 
-  /* predict */
+  /* Prediction logic */
   const predict = async (m) => {
     if (!webcamRef.current?.video) return;
     if (webcamRef.current.video.readyState !== 4) return;
@@ -72,55 +75,80 @@ const ScanArtwork = () => {
     }
   };
 
-  /* fetch artwork */
+  /* Fetch artwork from API */
   const fetchArtwork = async (label) => {
     try {
       const res = await fetch(`${API_BASE}&filters[slug][$eq]=${label}`);
       const json = await res.json();
       if (json.data?.length) {
         const art = json.data[0];
-        setTitle(art.art_title || "Untitled");
-        setArtist(art.artist || "Unknown artist");
-        setDescription(art.art_description || "No description available.");
+        setArtwork({
+          title: art.art_title || "Untitled",
+          artist: art.artist || "Unknown artist",
+          description: art.art_description || "No description available.",
+          saleStat: art.saleStat || "unknown",
+          price: art.price || null,
+        });
         setShowDescription(false);
-        speak(art.art_description);
+        playVoice(art.art_description);
       } else {
-        setTitle("");
-        setArtist("");
-        setDescription("Artwork not found in the database.");
+        setArtwork({
+          title: "",
+          artist: "",
+          description: "Artwork not found in the database.",
+          saleStat: "unknown",
+        });
         setShowDescription(true);
-        speak("Artwork not found.");
+        playVoice("Artwork not found.");
       }
     } catch (e) {
       console.error("API error", e);
     }
   };
 
-  /* voice utils */
-  const speak = (txt) => {
+  /* Voice synthesis logic */
+  const playVoice = (text) => {
     window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(txt);
-    u.lang = "en-US";
-    u.onend = () => setIsPaused(false);
-    window.speechSynthesis.speak(u);
+    const utterance = new SpeechSynthesisUtterance(text);
+    speechRef.current = utterance;
+
+    utterance.lang = "en-US";
+    utterance.onstart = () => {
+      setIsSpeaking(true);
+      setIsPaused(false);
+    };
+    utterance.onend = () => {
+      setIsSpeaking(false);
+      setIsPaused(false);
+    };
+
+    window.speechSynthesis.speak(utterance);
   };
 
   const toggleVoice = () => {
-    if (window.speechSynthesis.paused) {
-      window.speechSynthesis.resume();
-      setIsPaused(false);
-    } else if (window.speechSynthesis.speaking) {
-      window.speechSynthesis.pause();
-      setIsPaused(true);
+    if (!speechRef.current) return;
+
+    if (window.speechSynthesis.speaking) {
+      if (isPaused) {
+        window.speechSynthesis.resume();
+        setIsPaused(false);
+      } else {
+        window.speechSynthesis.pause();
+        setIsPaused(true);
+      }
+    } else {
+      // Replay the description
+      if (artwork?.description) {
+        playVoice(artwork.description);
+      }
     }
   };
 
-  /* NEW — switch camera */
+  /* Switch camera between front and back */
   const switchCamera = useCallback(() => {
     setFacingMode((prev) => (prev === "user" ? "environment" : "user"));
   }, []);
 
-  /* render */
   return (
     <div className="text-center">
       <div className="scan-wrapper">
@@ -131,71 +159,83 @@ const ScanArtwork = () => {
           className="webcam-view"
         />
 
-        {/* 1 ▸ scanning overlay */}
-        {!description && (
+        {/* Overlay when scanning */}
+        {!artwork?.description && (
           <>
-            
-              <div className="bl" />
-              <div className="tr" />
-           
-            
+            <div className="bl" />
+            <div className="tr" />
 
-            {/* NEW ▸ camera-flip button (only while scanning) */}
             <button
               className="cam-flip-btn"
               onClick={switchCamera}
               title="Switch camera"
             >
-             <SwitchCamera/>
+              <SwitchCamera />
             </button>
           </>
         )}
 
-        {/* 2 ▸ buttons bar (description hidden) */}
-        {description && !showDescription && (
+        {/* Small description bar */}
+        {artwork?.description && !showDescription && (
           <div className="desc-cardsmall">
             <div className="buttons-bar">
-              <div onClick={toggleVoice}>{isPaused ? <PlayCircle size={32}/> : <PauseCircle size={32}/>}</div>
+              <div onClick={toggleVoice}>
+                {isPaused || !isSpeaking ? (
+                  <PlayCircle size={32} />
+                ) : (
+                  <PauseCircle size={32} />
+                )}
+              </div>
               <div
                 onClick={() => setShowDescription(true)}
                 title="Show description"
               >
-                <ArrowUpCircle size={32}/>
-               
+                <ArrowUpCircle size={32} />
               </div>
             </div>
           </div>
         )}
 
-        {/* 3 ▸ description card */}
+        {/* Full description card */}
         {showDescription && (
           <div className="desc-card">
             <div className="buttons-bar">
-              <div onClick={toggleVoice}>{isPaused ? <PlayCircle size={32}/> : <PauseCircle size={32}/>}</div>
+              <div onClick={toggleVoice}>
+                {isPaused || !isSpeaking ? (
+                  <PlayCircle size={32} />
+                ) : (
+                  <PauseCircle size={32} />
+                )}
+              </div>
               <div
                 onClick={() => setShowDescription(false)}
                 title="Hide description"
               >
-                <ArrowDownCircle size={32}/>
+                <ArrowDownCircle size={32} />
               </div>
             </div>
-             <div className="sale-status">
-    {artwork?.saleStat === "onSale" ? (
-      <>
-        <span className="status on-sale">For Sale</span>
-        <span className="price">₱{artwork?.price || "Contact for price"}</span>
-      </>
-    ) : artwork?.saleStat === "notForSale" ? (
-      <span className="status not-sale">Not for Sale</span>
-    ) : artwork?.saleStat === "sold" ? (
-      <span className="status sold">Sold</span>
-    ) : (
-      <span className="status unknown">Status Unknown</span>
-    )}
-  </div>
-            <h3>{title}</h3>
-            <h4>{artist}</h4>
-            <p>{description}</p>
+
+            {/* Sale status */}
+            <div className="sale-status">
+              {artwork?.saleStat === "onSale" ? (
+                <>
+                  <span className="status on-sale">For Sale</span>
+                  <span className="price">
+                    ₱{artwork?.price || "Contact for price"}
+                  </span>
+                </>
+              ) : artwork?.saleStat === "notForSale" ? (
+                <span className="status not-sale">Not for Sale</span>
+              ) : artwork?.saleStat === "sold" ? (
+                <span className="status sold">Sold</span>
+              ) : (
+                <span className="status unknown">Status Unknown</span>
+              )}
+            </div>
+
+            <h3>{artwork?.title}</h3>
+            <h4>{artwork?.artist}</h4>
+            <p>{artwork?.description}</p>
           </div>
         )}
       </div>
