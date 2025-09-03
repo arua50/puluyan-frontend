@@ -108,7 +108,6 @@ const ScanArtwork = () => {
 
   /* Voice control */
 const toggleVoice = () => {
-    if (!artwork?.description) return;
 
     if (isPaused) {
       if (!utteranceRef.current) {
