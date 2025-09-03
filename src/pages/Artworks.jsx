@@ -22,7 +22,7 @@ const Artworks = () => {
   }
 
   // Fallback placeholder
-  return "https://via.placeholder.com/300x300?text=No+Image";
+  return "https://via.placeholder.com/150x150?text=No+Image";
 };
   useEffect(() => {
     const fetchArtworks = async () => {
