@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "./Exhibitions.css";
 
 const API_URL = "https://puluyanartgallery.onrender.com";
-const BASE_URL = `https://puluyanartgallery.onrender.com/api/exhibitions?populate=coverImage`;
+const BASE_URL = `${API_URL}/api/exhibitions?populate=coverImage`;
 
 const Exhibitions = () => {
   const [exhibitions, setExhibitions] = useState([]);
