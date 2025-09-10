@@ -18,6 +18,7 @@ const API_BASE =
 const ScanArtwork = () => {
   const webcamRef = useRef(null);
   const pollRef = useRef(null);
+  const timerRef = useRef(null);
 
   // Refs for speech synthesis
   const utteranceRef = useRef(null);
@@ -33,6 +34,7 @@ const ScanArtwork = () => {
   const [isSpeaking, setIsSpeaking] = useState(false);
 
   const [facingMode, setFacingMode] = useState("environment"); // or "user"
+  const [noArtworkMsg, setNoArtworkMsg] = useState(false); // NEW state
 
   /* Load Teachable Machine model */
   useEffect(() => {
@@ -53,12 +55,33 @@ const ScanArtwork = () => {
   useEffect(() => {
     if (!model) return;
     pollRef.current = setInterval(() => predict(model), 3000);
+
+    // Start 5s timer on mount
+    startTimer();
+
     return () => {
       clearInterval(pollRef.current);
+      clearTimeout(timerRef.current);
       synthRef.current.cancel();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [model]);
+
+  /* Timer functions */
+  const startTimer = () => {
+    clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      if (!artwork) {
+        setNoArtworkMsg(true);
+      }
+    }, 10000); // 5 seconds
+  };
+
+  const resetTimer = () => {
+    clearTimeout(timerRef.current);
+    setNoArtworkMsg(false);
+    startTimer();
+  };
 
   /* Prediction logic */
   const predict = async (m) => {
@@ -72,6 +95,7 @@ const ScanArtwork = () => {
       if (highest.probability > 0.9 && highest.className !== maxPrediction) {
         setMaxPrediction(highest.className);
         await fetchArtwork(highest.className);
+        resetTimer(); // reset timer when something is detected
       }
     } catch (e) {
       console.error("Prediction error", e);
@@ -95,14 +119,8 @@ const ScanArtwork = () => {
         setShowDescription(false);
         playVoice(art.art_description);
       } else {
-        setArtwork({
-          title: "",
-          artist: "",
-          description: "Artwork not found in the database.",
-          saleStat: "unknown",
-        });
-        setShowDescription(true);
-        playVoice("Artwork not found.");
+        setArtwork(null);
+        setNoArtworkMsg(true);
       }
     } catch (e) {
       console.error("API error", e);
@@ -156,6 +174,7 @@ const ScanArtwork = () => {
   useEffect(() => {
     return () => {
       synthRef.current.cancel();
+      clearTimeout(timerRef.current);
     };
   }, []);
 
@@ -188,6 +207,13 @@ const ScanArtwork = () => {
               <SwitchCamera />
             </button>
           </>
+        )}
+
+        {/* Centered "not recognized" message */}
+        {noArtworkMsg && !artwork && (
+          <div className="no-artwork-message">
+            <p>Artwork not recognized</p>
+          </div>
         )}
 
         {/* Small description bar */}
