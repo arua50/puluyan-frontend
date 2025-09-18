@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Exhibitions.css";
 
-const API_URL = "https://puluyanartgallery.onrender.com";
+const API_URL = "https://puluyan-back.onrender.com";
 const BASE_URL = `${API_URL}/api/exhibitions?populate=coverImage`;
 
 const Exhibitions = () => {

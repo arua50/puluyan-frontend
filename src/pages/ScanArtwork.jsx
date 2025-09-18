@@ -13,7 +13,7 @@ import {
 /* CONFIG */
 const MODEL_URL = "https://teachablemachine.withgoogle.com/models/lCqZGEeCd/";
 const API_BASE =
-  "https://puluyanartgallery.onrender.com/api/artworks?populate=*";
+  "https://puluyan-back.onrender.com/api/artworks?populate=*";
 
 const ScanArtwork = () => {
   const webcamRef = useRef(null);

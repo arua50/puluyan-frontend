@@ -17,7 +17,7 @@ const ArtworkDetails = () => {
     const fetchArtwork = async () => {
       try {
         const response = await fetch(
-          `https://puluyanartgallery.onrender.com/api/artworks/${id}?populate=*`
+          `https://puluyan-back.onrender.com/api/artworks/${id}?populate=*`
         );
         if (!response.ok) {
           throw new Error("Failed to fetch artwork");

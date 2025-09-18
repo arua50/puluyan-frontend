@@ -28,7 +28,7 @@ const Artworks = () => {
     const fetchArtworks = async () => {
       try {
         const response = await fetch(
-          `https://puluyanartgallery.onrender.com/api/artworks?filters[exhibition][id][$eq]=${id}&populate=*`
+          `https://puluyan-back.onrender.com/api/artworks?filters[exhibition][id][$eq]=${id}&populate=*`
         );
 
         if (!response.ok) {
