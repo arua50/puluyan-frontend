@@ -4,7 +4,7 @@ import { useParams } from "react-router-dom";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, useGLTF } from "@react-three/drei";
 import { PlayCircle, PauseCircle, ArrowUpCircle, ArrowDownCircle } from "lucide-react";
-import "artwork.css";
+import "./artwork3D.css";
 const Model = ({ url }) => {
   const { scene } = useGLTF(url);
   return <primitive object={scene} scale={1.5} />;
