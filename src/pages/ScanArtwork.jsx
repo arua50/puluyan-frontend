@@ -7,7 +7,6 @@ import {
   ArrowUpCircle,
   PauseCircle,
   PlayCircle,
-  SwitchCamera,
 } from "lucide-react";
 
 /* CONFIG */
@@ -178,10 +177,7 @@ const ScanArtwork = () => {
     };
   }, []);
 
-  /* Switch camera between front and back */
-  const switchCamera = useCallback(() => {
-    setFacingMode((prev) => (prev === "user" ? "environment" : "user"));
-  }, []);
+
 
   return (
     <div className="text-center">
@@ -199,13 +195,6 @@ const ScanArtwork = () => {
             <div className="bl" />
             <div className="tr" />
 
-            <button
-              className="cam-flip-btn"
-              onClick={switchCamera}
-              title="Switch camera"
-            >
-              <SwitchCamera />
-            </button>
           </>
         )}
 

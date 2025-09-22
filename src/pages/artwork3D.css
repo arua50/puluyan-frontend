@@ -1,0 +1,45 @@
+/* Title + Sale Row */
+.title-sale-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+/* Title */
+.title-sale-row h3 {
+  font-size: 20px;
+  font-weight: bold;
+  margin: 0;
+  color: #ffffff;
+}
+
+/* Sale Info styling */
+.sale-info h5 {
+  margin: 0;
+  font-size: 14px;
+  text-align: right;
+}
+
+.sale-on {
+  color: white;
+  font-weight: bold;
+}
+
+.sale-price {
+  color: #f5f5f5;
+}
+
+.sale-not {
+  color: gray;
+  font-weight: bold;
+}
+
+.sale-sold {
+  color: red;
+  font-weight: bold;
+}
+
+.sale-unknown {
+  color: gray;
+}

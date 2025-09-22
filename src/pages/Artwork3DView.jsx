@@ -4,7 +4,7 @@ import { useParams } from "react-router-dom";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, useGLTF } from "@react-three/drei";
 import { PlayCircle, PauseCircle, ArrowUpCircle, ArrowDownCircle } from "lucide-react";
-
+import "artwork.css";
 const Model = ({ url }) => {
   const { scene } = useGLTF(url);
   return <primitive object={scene} scale={1.5} />;
@@ -137,42 +137,48 @@ const Artwork3DView = () => {
           </div>
         )}
 
-        {/* Description panel (expanded) */}
-        {showDescription && (
-          <div className="desc-card">
-            <div className="buttons-bar">
-              <div onClick={toggleVoice}>
-                {isPaused ? <PlayCircle size={32} /> : <PauseCircle size={32} />}
-              </div>
-              <div
-                onClick={() => setShowDescription(false)}
-                title="Hide description"
-              >
-                <ArrowDownCircle size={32} />
-              </div>
-            </div>
-            {/*sale stat  */}
-              <div className="sale-info">
-                {artwork.saleStat === "onSale" ? (
-                  <>
-                    <h5 style={{ color: "white", fontWeight: "bold" }}>For Sale</h5>
-                    <h5 style={{ color: "white" }}>
-                      Price: {artwork.price ? `₱${artwork.price}` : "Contact for price"}
-                    </h5>
-                  </>
-                ) : artwork.saleStat === "notForSale" ? (
-                  <h5 style={{ color: "gray", fontWeight: "bold" }}>Not for Sale</h5>
-                ) : artwork.saleStat === "sold" ? (
-                  <h5 style={{ color: "red", fontWeight: "bold" }}>Sold</h5>
-                ) : (
-                  <h5 style={{ color: "gray" }}>Sale status unknown</h5>
-                )}
-              </div>
-            <h3>{artwork.title}</h3>
-            <h4>{artwork.artist}</h4>
-            <p>{artwork.description}</p>
-          </div>
+ {/* Expanded description panel */}
+{showDescription && (
+  <div className="desc-card">
+    <div className="buttons-bar">
+      <div onClick={toggleVoice}>
+        {isPaused ? <PlayCircle size={32} /> : <PauseCircle size={32} />}
+      </div>
+      <div
+        onClick={() => setShowDescription(false)}
+        title="Hide description"
+      >
+        <ArrowDownCircle size={32} />
+      </div>
+    </div>
+
+    {/* Title + Sale Status in one row */}
+    <div className="title-sale-row">
+      <h3>{artwork.title}</h3>
+
+      <div className="sale-info">
+        {artwork.saleStat === "onSale" ? (
+          <>
+            <h5 className="sale-on">For Sale</h5>
+            <h5 className="sale-price">
+              {artwork.price ? `₱${artwork.price}` : "Contact for price"}
+            </h5>
+          </>
+        ) : artwork.saleStat === "notForSale" ? (
+          <h5 className="sale-not">Not for Sale</h5>
+        ) : artwork.saleStat === "sold" ? (
+          <h5 className="sale-sold">Sold</h5>
+        ) : (
+          <h5 className="sale-unknown">Sale status unknown</h5>
         )}
+      </div>
+    </div>
+
+    <h4>{artwork.artist}</h4>
+    <p>{artwork.description}</p>
+  </div>
+)}
+
       </div>
     </div>
   );
