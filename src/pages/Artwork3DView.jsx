@@ -157,7 +157,7 @@ const Artwork3DView = () => {
       <h3>{artwork.title}</h3>
 
       <div className="sale-info">
-        {artwork.saleStat === "onSale" ? (
+        {artwork.saleStat === "forSale" ? (
           <>
             <h5 className="sale-on">For Sale</h5>
             <h5 className="sale-price">
