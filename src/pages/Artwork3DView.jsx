@@ -159,7 +159,7 @@ const Artwork3DView = () => {
       <div className="sale-info">
         {artwork.saleStat === "forSale" ? (
           <>
-            <h5 className="sale-on">For Sale</h5>
+            <h5 className="sale-on">On Sale</h5>
             <h5 className="sale-price">
               {artwork.price ? `₱${artwork.price}` : "Contact for price"}
             </h5>

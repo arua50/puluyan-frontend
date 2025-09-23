@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 
 /* CONFIG */
-const MODEL_URL = "https://teachablemachine.withgoogle.com/models/lCqZGEeCd/";
+const MODEL_URL = "https://teachablemachine.withgoogle.com/models/yhD5GdSXk/";
 const API_BASE =
   "https://puluyan-back.onrender.com/api/artworks?populate=*";
 
@@ -262,7 +262,7 @@ const ScanArtwork = () => {
                 <h5 style={{ color: "gray" }}>Sale status unknown</h5>
               )}
             </div>
-
+  {/* end */}
             <h3>{artwork?.title}</h3>
             <h4>{artwork?.artist}</h4>
             <p>{artwork?.description}</p>
