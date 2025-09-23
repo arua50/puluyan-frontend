@@ -197,28 +197,7 @@ html,
   background: rgba(255, 255, 255, .3);
 }
 
-/* ──────────────────────────────────────────────
-   7. SALE STATUS TAG
-─────────────────────────────────────────────── */
-.sale-status {
-  position: absolute;
-  top: 16px;
-  right: 20px;
-  text-align: right;
-}
 
-.sale-status .status {
-  display: block;
-  font-size: 0.9rem;
-  font-weight: bold;
-}
-
-.sale-status .price {
-  display: block;
-  font-size: 0.85rem;
-  margin-top: 4px;
-  opacity: 0.85;
-}
 
 /* ──────────────────────────────────────────────
    8. RESPONSIVENESS
@@ -247,12 +226,51 @@ html,
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: rgba(0, 0, 0, 0.7);
-  padding: 16px 24px;
-  border-radius: 12px;
+  background: rgba(69, 68, 68, 0.7);
+  padding: 14px 20px;
+  border-radius: 10px;
   color: white;
-  font-size: 1.2rem;
+  font-size: 1rem;   /* default */
   font-weight: bold;
   z-index: 999;
 }
 
+/* On small screens (phones) */
+@media (max-width: 600px) {
+  .no-artwork-message {
+    font-size: 0.85rem;  /* smaller text */
+    padding: 10px 16px;  /* tighter box */
+  }
+}
+
+
+/* Title + Sale aligned row */
+.title-sale-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: .5rem;
+}
+
+.title-sale-row h3 {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #fff;
+  text-align: left;
+}
+
+.sale-info {
+  text-align: right;
+}
+
+.sale-info .status {
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.sale-info .price {
+  display: block;
+  font-size: 0.85rem;
+  opacity: 0.85;
+}

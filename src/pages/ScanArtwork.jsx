@@ -112,7 +112,7 @@ const ScanArtwork = () => {
           title: art.art_title || "Untitled",
           artist: art.artist || "Unknown artist",
           description: art.art_description || "No description available.",
-          saleStat: art.saleStat || "unknown",
+          saleStat: art.saleStatus || "unknown",
           price: art.price || null,
         });
         setShowDescription(false);
@@ -245,25 +245,25 @@ const ScanArtwork = () => {
               </div>
             </div>
 
-            {/* Sale status */}
-            <div className="sale-info">
-              {artwork.saleStat === "onSale" ? (
-                <>
-                  <h5 style={{ color: "white", fontWeight: "bold" }}>For Sale</h5>
-                  <h5 style={{ color: "white" }}>
-                    Price: {artwork.price ? `₱${artwork.price}` : "Contact for price"}
-                  </h5>
-                </>
-              ) : artwork.saleStat === "notForSale" ? (
-                <h5 style={{ color: "gray", fontWeight: "bold" }}>Not for Sale</h5>
-              ) : artwork.saleStat === "sold" ? (
-                <h5 style={{ color: "red", fontWeight: "bold" }}>Sold</h5>
-              ) : (
-                <h5 style={{ color: "gray" }}>Sale status unknown</h5>
-              )}
+            <div className="title-sale-row">
+              <h3>{artwork?.title}</h3>
+              <div className="sale-info">
+                {artwork.saleStat === "forSale" ? (
+                  <>
+                    <span className="status for-sale">For Sale</span>
+                    <span className="price">
+                      {artwork.price ? `₱${artwork.price}` : "Contact for price"}
+                    </span>
+                  </>
+                ) : artwork.saleStat === "notForSale" ? (
+                  <span className="status not-for-sale">Not for Sale</span>
+                ) : artwork.saleStat === "sold" ? (
+                  <span className="status sold">Sold</span>
+                ) : (
+                  <span className="status unknown">Sale status unknown</span>
+                )}
+              </div>
             </div>
-  {/* end */}
-            <h3>{artwork?.title}</h3>
             <h4>{artwork?.artist}</h4>
             <p>{artwork?.description}</p>
           </div>
