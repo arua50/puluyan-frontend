@@ -113,7 +113,7 @@ const Artworks = () => {
               alt={artwork.title || "Artwork"}
               style={{
                 width: "100%",
-                height: "70%", // ✅ control how much of square is image
+                height: "60%", // ✅ control how much of square is image
                 objectFit: "cover",
               }}
             />
