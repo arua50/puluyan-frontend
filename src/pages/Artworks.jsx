@@ -103,7 +103,7 @@ const Artworks = () => {
               backgroundColor: "#fff",
               overflow: "hidden",
               transition: "transform 0.2s ease-in-out",
-              aspectRatio: "1 / 1", // ✅ makes it a square
+              aspectRatio: "1 / 1", 
               display: "flex",
               flexDirection: "column",
             }}
@@ -113,11 +113,11 @@ const Artworks = () => {
               alt={artwork.title || "Artwork"}
               style={{
                 width: "100%",
-                height: "80%", // ✅ control how much of square is image
+                height: "80%",
                 objectFit: "cover",
               }}
             />
-            <div style={{ padding: "5px", height: "40%" }}>
+            <div style={{ padding: "1px", height: "30%" }}>
               <h2
                 style={{
                   fontSize: "16px",
@@ -129,7 +129,7 @@ const Artworks = () => {
               >
                 {artwork.title}
               </h2>
-              <p style={{ color: "#666", fontSize: "14px" }}>By {artwork.artist}</p>
+              <p style={{ color: "#666", fontSize: "12px" }}>By {artwork.artist}</p>
             </div>
           </div>
         </Link>
