@@ -99,7 +99,6 @@ const Artworks = () => {
           <div
             style={{
               borderRadius: "2px",
-              boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
               backgroundColor: "#fff",
               overflow: "hidden",
               transition: "transform 0.2s ease-in-out",
@@ -113,11 +112,11 @@ const Artworks = () => {
               alt={artwork.title || "Artwork"}
               style={{
                 width: "100%",
-                height: "80%",
+                height: "75%",
                 objectFit: "cover",
               }}
             />
-            <div style={{ padding: "1px", height: "30%" }}>
+            <div style={{ padding: "1px", height: "20%" }}>
               <h2
                 style={{
                   fontSize: "16px",
