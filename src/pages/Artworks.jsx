@@ -22,7 +22,7 @@ const Artworks = () => {
   }
 
   // Fallback placeholder
-  return "https://via.placeholder.com/300x300?text=No+Image";
+  return "https://via.placeholder.com/200x200?text=No+Image";
 };
   useEffect(() => {
     const fetchArtworks = async () => {
@@ -69,55 +69,60 @@ const Artworks = () => {
   }
 
   return (
-    <div style={{ padding: "24px", maxWidth: "960px", margin: "0 auto" }}>
-      <h1 style={{ fontSize: "28px", fontWeight: "bold", textAlign: "center", marginBottom: "24px" }}>
-        Artworks
-      </h1>
-
-      {artworks.length === 0 ? (
-        <p style={{ textAlign: "center", fontSize: "16px", color: "#666" }}>
-          No artworks found for this exhibition.
-        </p>
-      ) : (
-        <div
+  <div
+  style={{
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+    gap: "20px",
+  }}
+>
+  {artworks.map((artwork) => (
+    <Link
+      to={`/artwork-3d/${artwork.id}`}
+      key={artwork.id}
+      style={{ textDecoration: "none", color: "inherit" }}
+    >
+      <div
+        style={{
+          borderRadius: "10px",
+          boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
+          backgroundColor: "#fff",
+          overflow: "hidden",
+          transition: "transform 0.2s ease-in-out",
+          aspectRatio: "1 / 1", // 👈 keeps it perfectly square
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <img
+          src={artwork.image}
+          alt={artwork.title || "Artwork"}
           style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-            gap: "20px",
+            width: "100%",
+            height: "70%", // image takes 70% of square
+            objectFit: "cover",
           }}
-        >
-          {artworks.map((artwork) => (
-            <Link
-              to={`/artwork-3d/${artwork.id}`}
-              key={artwork.id}
-              style={{ textDecoration: "none", color: "inherit" }}
-            >
-              <div
-                style={{
-                  borderRadius: "10px",
-                  boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
-                  backgroundColor: "#fff",
-                  overflow: "hidden",
-                  transition: "transform 0.2s ease-in-out",
-                }}
-              >
-                <img
-                  src={artwork.image}
-                  alt={artwork.title || "Artwork"}
-                  style={{ width: "100%", height: "200px", objectFit: "cover" }}
-                />
-                <div style={{ padding: "16px" }}>
-                  <h2 style={{ fontSize: "18px", fontWeight: "600", marginBottom: "8px" }}>
-                    {artwork.title}
-                  </h2>
-                  <p style={{ color: "#666" }}>By {artwork.artist}</p>
-                </div>
-              </div>
-            </Link>
-          ))}
+        />
+        <div style={{ padding: "8px", flex: "1" }}>
+          <h2
+            style={{
+              fontSize: "16px",
+              fontWeight: "600",
+              marginBottom: "4px",
+              textAlign: "center",
+            }}
+          >
+            {artwork.title}
+          </h2>
+          <p style={{ color: "#666", fontSize: "14px", textAlign: "center" }}>
+            By {artwork.artist}
+          </p>
         </div>
-      )}
-    </div>
+      </div>
+    </Link>
+  ))}
+</div>
+
   );
 };
 
