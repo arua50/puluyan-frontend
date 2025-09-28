@@ -98,7 +98,7 @@ const Artworks = () => {
         >
           <div
             style={{
-              borderRadius: "10px",
+              borderRadius: "5px",
               boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
               backgroundColor: "#fff",
               overflow: "hidden",
@@ -113,7 +113,7 @@ const Artworks = () => {
               alt={artwork.title || "Artwork"}
               style={{
                 width: "100%",
-                height: "60%", // ✅ control how much of square is image
+                height: "85%", // ✅ control how much of square is image
                 objectFit: "cover",
               }}
             />
@@ -124,6 +124,7 @@ const Artworks = () => {
                   fontWeight: "600",
                   marginBottom: "6px",
                   lineHeight: "1.2",
+                  color: "#666"
                 }}
               >
                 {artwork.title}
