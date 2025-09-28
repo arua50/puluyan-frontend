@@ -87,13 +87,8 @@ const Artworks = () => {
       No artworks found for this exhibition.
     </p>
   ) : (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-        gap: "20px",
-      }}
-    >
+    <div className="artwork-grid">
+      
       {artworks.map((artwork) => (
         <Link
           to={`/artwork-3d/${artwork.id}`}
