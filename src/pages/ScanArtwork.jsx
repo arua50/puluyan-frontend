@@ -67,20 +67,29 @@ const ScanArtwork = () => {
   }, [model]);
 
   /* Timer functions */
-  const startTimer = () => {
-    clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => {
-      if (!artwork) {
-        setNoArtworkMsg(true);
-      }
-    }, 10000); // 5 seconds
-  };
+const startTimer = () => {
+  clearTimeout(timerRef.current);
 
-  const resetTimer = () => {
-    clearTimeout(timerRef.current);
-    setNoArtworkMsg(false);
-    startTimer();
-  };
+  timerRef.current = setTimeout(() => {
+    if (!artwork) {
+      setNoArtworkMsg(true);
+
+      // Hide after 3 seconds
+      setTimeout(() => {
+        setNoArtworkMsg(false);
+      }, 3000);
+
+      // Restart the 13s timer loop
+      startTimer();
+    }
+  }, 13000); // 13 seconds
+};
+
+const resetTimer = () => {
+  clearTimeout(timerRef.current);
+  setNoArtworkMsg(false);
+  startTimer(); // fresh 10s countdown after detecting artwork
+};
 
   /* Prediction logic */
   const predict = async (m) => {
