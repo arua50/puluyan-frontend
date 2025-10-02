@@ -78,7 +78,6 @@ const startTimer = () => {
       setTimeout(() => {
         setNoArtworkMsg(false);
       }, 3000);
-
       // Restart the 13s timer loop
       startTimer();
     }
@@ -178,13 +177,30 @@ const resetTimer = () => {
     }
   };
 
-  // Stop narration when component unmounts
-  useEffect(() => {
-    return () => {
-      synthRef.current.cancel();
-      clearTimeout(timerRef.current);
-    };
-  }, []);
+  // Stop narration when component unmounts, page refreshes, or tab loses focus
+useEffect(() => {
+  const handleBeforeUnload = () => {
+    synthRef.current.cancel();
+  };
+
+  const handleVisibilityChange = () => {
+    if (document.hidden && synthRef.current.speaking) {
+      synthRef.current.pause();
+      setIsPaused(true);
+    }
+  };
+
+  window.addEventListener("beforeunload", handleBeforeUnload);
+  document.addEventListener("visibilitychange", handleVisibilityChange);
+
+  return () => {
+    synthRef.current.cancel();
+    clearTimeout(timerRef.current);
+    window.removeEventListener("beforeunload", handleBeforeUnload);
+    document.removeEventListener("visibilitychange", handleVisibilityChange);
+  };
+}, []);
+
 
 
 
