@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
+// src/pages/ScanArtwork.jsx
+import React, { useEffect, useRef, useState } from "react";
 import Webcam from "react-webcam";
 import * as tmImage from "@teachablemachine/image";
 import "./ScanArtwork.css";
@@ -9,10 +10,23 @@ import {
   PlayCircle,
 } from "lucide-react";
 
+import { Canvas } from "@react-three/fiber";
+import { OrbitControls, useGLTF } from "@react-three/drei";
+
 /* CONFIG */
 const MODEL_URL = "https://teachablemachine.withgoogle.com/models/yhD5GdSXk/";
 const API_BASE =
   "https://puluyan-back.onrender.com/api/artworks?populate=*";
+
+/* 3D Model Component with orientation fix */
+const Model = ({ url }) => {
+  const { scene } = useGLTF(url);
+
+  // Fix orientation so front faces camera
+  scene.rotation.set(0, Math.PI / 2, 0);
+
+  return <primitive object={scene} scale={1.5} />;
+};
 
 const ScanArtwork = () => {
   const webcamRef = useRef(null);
@@ -33,7 +47,7 @@ const ScanArtwork = () => {
   const [isSpeaking, setIsSpeaking] = useState(false);
 
   const [facingMode, setFacingMode] = useState("environment"); // or "user"
-  const [noArtworkMsg, setNoArtworkMsg] = useState(false); // NEW state
+  const [noArtworkMsg, setNoArtworkMsg] = useState(false);
 
   /* Load Teachable Machine model */
   useEffect(() => {
@@ -55,7 +69,7 @@ const ScanArtwork = () => {
     if (!model) return;
     pollRef.current = setInterval(() => predict(model), 3000);
 
-    // Start 5s timer on mount
+    // Start 13s timer
     startTimer();
 
     return () => {
@@ -67,28 +81,29 @@ const ScanArtwork = () => {
   }, [model]);
 
   /* Timer functions */
-const startTimer = () => {
-  clearTimeout(timerRef.current);
+  const startTimer = () => {
+    clearTimeout(timerRef.current);
 
-  timerRef.current = setTimeout(() => {
-    if (!artwork) {
-      setNoArtworkMsg(true);
+    timerRef.current = setTimeout(() => {
+      if (!artwork) {
+        setNoArtworkMsg(true);
 
-      // Hide after 3 seconds
-      setTimeout(() => {
-        setNoArtworkMsg(false);
-      }, 3000);
-      // Restart the 13s timer loop
-      startTimer();
-    }
-  }, 13000); // 13 seconds
-};
+        // Hide after 3 seconds
+        setTimeout(() => {
+          setNoArtworkMsg(false);
+        }, 3000);
 
-const resetTimer = () => {
-  clearTimeout(timerRef.current);
-  setNoArtworkMsg(false);
-  startTimer(); // fresh 10s countdown after detecting artwork
-};
+        // Restart the 13s timer loop
+        startTimer();
+      }
+    }, 13000); // 13 seconds
+  };
+
+  const resetTimer = () => {
+    clearTimeout(timerRef.current);
+    setNoArtworkMsg(false);
+    startTimer();
+  };
 
   /* Prediction logic */
   const predict = async (m) => {
@@ -122,6 +137,9 @@ const resetTimer = () => {
           description: art.art_description || "No description available.",
           saleStat: art.saleStatus || "unknown",
           price: art.price || null,
+          model3DUrl: art.model3D?.url
+            ? `https://puluyan-back.onrender.com${art.model3D.url}`
+            : null,
         });
         setShowDescription(false);
         playVoice(art.art_description);
@@ -137,11 +155,8 @@ const resetTimer = () => {
   /* Play AI voice narration */
   const playVoice = (text) => {
     if (!text) return;
-
-    // Cancel any current speech
     synthRef.current.cancel();
 
-    // Create new utterance
     utteranceRef.current = new SpeechSynthesisUtterance(text);
     utteranceRef.current.lang = "en-US";
 
@@ -149,12 +164,10 @@ const resetTimer = () => {
       setIsSpeaking(true);
       setIsPaused(false);
     };
-
     utteranceRef.current.onend = () => {
       setIsSpeaking(false);
       setIsPaused(false);
     };
-
     utteranceRef.current.onerror = () => {
       setIsSpeaking(false);
     };
@@ -177,32 +190,29 @@ const resetTimer = () => {
     }
   };
 
-  // Stop narration when component unmounts, page refreshes, or tab loses focus
-useEffect(() => {
-  const handleBeforeUnload = () => {
-    synthRef.current.cancel();
-  };
+  /* Stop narration on unmount / tab change */
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      synthRef.current.cancel();
+    };
 
-  const handleVisibilityChange = () => {
-    if (document.hidden && synthRef.current.speaking) {
-      synthRef.current.pause();
-      setIsPaused(true);
-    }
-  };
+    const handleVisibilityChange = () => {
+      if (document.hidden && synthRef.current.speaking) {
+        synthRef.current.pause();
+        setIsPaused(true);
+      }
+    };
 
-  window.addEventListener("beforeunload", handleBeforeUnload);
-  document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
-  return () => {
-    synthRef.current.cancel();
-    clearTimeout(timerRef.current);
-    window.removeEventListener("beforeunload", handleBeforeUnload);
-    document.removeEventListener("visibilitychange", handleVisibilityChange);
-  };
-}, []);
-
-
-
+    return () => {
+      synthRef.current.cancel();
+      clearTimeout(timerRef.current);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
 
   return (
     <div className="text-center">
@@ -219,7 +229,6 @@ useEffect(() => {
           <>
             <div className="bl" />
             <div className="tr" />
-
           </>
         )}
 
@@ -227,6 +236,18 @@ useEffect(() => {
         {noArtworkMsg && !artwork && (
           <div className="no-artwork-message">
             <p>Artwork not recognized</p>
+          </div>
+        )}
+
+        {/* Show 3D preview if artwork has model */}
+        {artwork?.model3DUrl && (
+          <div style={{ height: "400px", marginTop: "16px" }}>
+            <Canvas camera={{ position: [0, 0, 5], fov: 50 }}>
+              <ambientLight intensity={0.5} />
+              <directionalLight position={[5, 5, 5]} />
+              <Model url={artwork.model3DUrl} />
+              <OrbitControls />
+            </Canvas>
           </div>
         )}
 
