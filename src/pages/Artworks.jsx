@@ -1,7 +1,7 @@
 import React, { useEffect, useState, Suspense } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Canvas, useLoader, useFrame, useThree } from "@react-three/fiber";
-import { OrbitControls, Html, Environment } from "@react-three/drei";
+import { Html, Environment } from "@react-three/drei";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { KTX2Loader } from "three/examples/jsm/loaders/KTX2Loader.js";
@@ -19,9 +19,9 @@ const Loader = () => (
 );
 
 /* ===========================
-   Rotating 3D Model
+   Smooth Swaying 3D Model
 =========================== */
-const RotatingModel = ({ url }) => {
+const SwayingModel = ({ url }) => {
   const { gl } = useThree();
   const gltf = useLoader(GLTFLoader, url, (loader) => {
     loader.setMeshoptDecoder(MeshoptDecoder);
@@ -40,22 +40,25 @@ const RotatingModel = ({ url }) => {
     loader.setKTX2Loader(ktx2Loader);
   });
 
-  // Auto-center & scale
+  // Center and scale the model properly
   React.useEffect(() => {
     const box = new THREE.Box3().setFromObject(gltf.scene);
     const center = box.getCenter(new THREE.Vector3());
     const size = box.getSize(new THREE.Vector3());
     gltf.scene.position.sub(center);
     const maxAxis = Math.max(size.x, size.y, size.z);
-    gltf.scene.scale.setScalar(1.5 / maxAxis);
+    gltf.scene.scale.setScalar(1.3 / maxAxis);
   }, [gltf]);
 
-  // Gentle rotation
-  useFrame(() => {
-    if (gltf.scene) gltf.scene.rotation.y += 0.01;
+  // Make it move side-to-side (no full spin)
+  useFrame(({ clock }) => {
+    if (gltf.scene) {
+      const t = Math.sin(clock.getElapsedTime() * 0.6) * 0.6; // oscillation
+      gltf.scene.rotation.y = t; // side-to-side sway
+    }
   });
 
-  return <primitive object={gltf.scene} scale={[0.5, 0.5, 0.5]}  />;
+  return <primitive object={gltf.scene} scale={[0.5, 0.5, 0.5]} />;
 };
 
 /* ===========================
@@ -127,15 +130,21 @@ const Artworks = () => {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-            gap: "20px",
+            gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+            gap: "24px",
+            justifyItems: "center",
           }}
         >
           {artworks.map((artwork) => (
             <Link
               to={`/artwork-3d/${artwork.id}`}
               key={artwork.id}
-              style={{ textDecoration: "none", color: "inherit" }}
+              style={{
+                textDecoration: "none",
+                color: "inherit",
+                width: "100%",
+                maxWidth: "350px",
+              }}
             >
               <div
                 style={{
@@ -147,15 +156,15 @@ const Artworks = () => {
                   justifyContent: "space-between",
                   alignItems: "center",
                   boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                  height: "320px", // fixed height for equal sizing
+                  height: "360px", // uniform size
+                  transition: "transform 0.2s ease-in-out",
                 }}
               >
                 <div
                   style={{
                     width: "100%",
-                    height: "75%", // space for 3D or image
+                    height: "75%",
                     background: "#f3f3f3",
-                    flexShrink: 0,
                   }}
                 >
                   {artwork.model ? (
@@ -170,10 +179,9 @@ const Artworks = () => {
                       <ambientLight intensity={0.6} />
                       <directionalLight position={[3, 3, 3]} intensity={1.2} />
                       <Suspense fallback={<Loader />}>
-                        <RotatingModel url={artwork.model} />
+                        <SwayingModel url={artwork.model} />
                       </Suspense>
                       <Environment preset="sunset" />
-                      <OrbitControls enableZoom={false} enablePan={false} />
                     </Canvas>
                   ) : (
                     <img
@@ -191,19 +199,18 @@ const Artworks = () => {
                   )}
                 </div>
 
-                {/* Fixed text area */}
                 <div
                   style={{
                     width: "100%",
                     textAlign: "center",
-                    padding: "8px",
+                    padding: "10px",
                     backgroundColor: "#fff",
-                    flexShrink: 0,
+                    borderTop: "1px solid #eee",
                   }}
                 >
                   <h2
                     style={{
-                      fontSize: "14px",
+                      fontSize: "15px",
                       fontWeight: "600",
                       color: "#333",
                       margin: "0",
@@ -217,7 +224,7 @@ const Artworks = () => {
                   </h2>
                   <p
                     style={{
-                      fontSize: "12px",
+                      fontSize: "13px",
                       color: "#666",
                       margin: "4px 0 0 0",
                       whiteSpace: "nowrap",
