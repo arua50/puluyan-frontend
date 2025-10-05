@@ -40,7 +40,7 @@ const SwayingModel = ({ url }) => {
     loader.setKTX2Loader(ktx2Loader);
   });
 
-  // Center and scale the model properly
+  // Center and scale model
   React.useEffect(() => {
     const box = new THREE.Box3().setFromObject(gltf.scene);
     const center = box.getCenter(new THREE.Vector3());
@@ -50,15 +50,15 @@ const SwayingModel = ({ url }) => {
     gltf.scene.scale.setScalar(1.3 / maxAxis);
   }, [gltf]);
 
-  // Make it move side-to-side (no full spin)
+  // Gentle side-to-side motion
   useFrame(({ clock }) => {
     if (gltf.scene) {
-      const t = Math.sin(clock.getElapsedTime() * 0.6) * 0.6; // oscillation
-      gltf.scene.rotation.y = t; // side-to-side sway
+      const t = Math.sin(clock.getElapsedTime() * 0.6) * 0.6;
+      gltf.scene.rotation.y = t;
     }
   });
 
-  return <primitive object={gltf.scene} scale={[0.5, 0.5, 0.5]} />;
+  return <primitive object={gltf.scene} scale={[0.5, 0.5, 0.5]}/>;
 };
 
 /* ===========================
@@ -86,9 +86,7 @@ const Artworks = () => {
           `https://puluyan-back.onrender.com/api/artworks?filters[exhibition][id][$eq]=${id}&populate=*`
         );
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
 
         const json = await response.json();
         const simplified = json.data.map((item) => ({
@@ -121,7 +119,7 @@ const Artworks = () => {
     );
 
   return (
-    <div style={{ padding: "16px", maxWidth: "1200px", margin: "0 auto" }}>
+    <div style={{ padding: "16px", maxWidth: "900px", margin: "0 auto" }}>
       {artworks.length === 0 ? (
         <p style={{ textAlign: "center", fontSize: "16px", color: "#666" }}>
           No artworks found.
@@ -130,8 +128,8 @@ const Artworks = () => {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-            gap: "24px",
+            gridTemplateColumns: "repeat(2, 1fr)", // always 2 columns
+            gap: "16px",
             justifyItems: "center",
           }}
         >
@@ -143,7 +141,6 @@ const Artworks = () => {
                 textDecoration: "none",
                 color: "inherit",
                 width: "100%",
-                maxWidth: "350px",
               }}
             >
               <div
@@ -156,14 +153,16 @@ const Artworks = () => {
                   justifyContent: "space-between",
                   alignItems: "center",
                   boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                  height: "360px", // uniform size
+                  height: "320px",
                   transition: "transform 0.2s ease-in-out",
+                  padding: "8px",
                 }}
               >
+                {/* Model or Image */}
                 <div
                   style={{
                     width: "100%",
-                    height: "75%",
+                    height: "70%",
                     background: "#f3f3f3",
                   }}
                 >
@@ -199,39 +198,40 @@ const Artworks = () => {
                   )}
                 </div>
 
+                {/* Text area (auto-resizing font) */}
                 <div
                   style={{
                     width: "100%",
                     textAlign: "center",
-                    padding: "10px",
                     backgroundColor: "#fff",
                     borderTop: "1px solid #eee",
+                    padding: "6px 4px",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                    alignItems: "center",
                   }}
                 >
                   <h2
                     style={{
-                      fontSize: "15px",
+                      fontSize: "clamp(10px, 2vw, 14px)",
                       fontWeight: "600",
                       color: "#333",
                       margin: "0",
-                      whiteSpace: "nowrap",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
+                      lineHeight: "1.2",
+                      wordBreak: "break-word",
                     }}
-                    title={artwork.title}
                   >
                     {artwork.title}
                   </h2>
                   <p
                     style={{
-                      fontSize: "13px",
+                      fontSize: "clamp(9px, 1.8vw, 12px)",
                       color: "#666",
                       margin: "4px 0 0 0",
-                      whiteSpace: "nowrap",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
+                      lineHeight: "1.2",
+                      wordBreak: "break-word",
                     }}
-                    title={artwork.artist}
                   >
                     {artwork.artist}
                   </p>
