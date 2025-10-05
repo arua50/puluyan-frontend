@@ -19,12 +19,13 @@ const Loader = () => (
 );
 
 /* ===========================
-   Rotating Model Preview
+   Rotating 3D Model
 =========================== */
 const RotatingModel = ({ url }) => {
   const { gl } = useThree();
   const gltf = useLoader(GLTFLoader, url, (loader) => {
     loader.setMeshoptDecoder(MeshoptDecoder);
+
     const dracoLoader = new DRACOLoader();
     dracoLoader.setDecoderPath(
       "https://www.gstatic.com/draco/versioned/decoders/1.5.6/"
@@ -39,7 +40,7 @@ const RotatingModel = ({ url }) => {
     loader.setKTX2Loader(ktx2Loader);
   });
 
-  // Center and scale automatically
+  // Auto-center & scale
   React.useEffect(() => {
     const box = new THREE.Box3().setFromObject(gltf.scene);
     const center = box.getCenter(new THREE.Vector3());
@@ -49,19 +50,19 @@ const RotatingModel = ({ url }) => {
     gltf.scene.scale.setScalar(1.5 / maxAxis);
   }, [gltf]);
 
-  // Rotation animation
+  // Gentle rotation
   useFrame(() => {
     if (gltf.scene) gltf.scene.rotation.y += 0.01;
   });
 
-  return <primitive object={gltf.scene} />;
+  return <primitive object={gltf.scene} scale={[0.5, 0.5, 0.5]}  />;
 };
 
 /* ===========================
    Artworks Grid Page
 =========================== */
 const Artworks = () => {
-  const { id } = useParams(); // Exhibition ID
+  const { id } = useParams();
   const [artworks, setArtworks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -98,7 +99,7 @@ const Artworks = () => {
         setArtworks(simplified);
       } catch (err) {
         console.error("Error fetching artworks:", err);
-        setError("Failed to load list of artworks.");
+        setError("Failed to load artworks.");
       } finally {
         setLoading(false);
       }
@@ -110,10 +111,14 @@ const Artworks = () => {
   if (loading)
     return <p style={{ textAlign: "center", fontSize: "18px" }}>Loading...</p>;
   if (error)
-    return <p style={{ textAlign: "center", color: "red", fontSize: "18px" }}>{error}</p>;
+    return (
+      <p style={{ textAlign: "center", color: "red", fontSize: "18px" }}>
+        {error}
+      </p>
+    );
 
   return (
-    <div style={{ padding: "16px", maxWidth: "1000px", margin: "0 auto" }}>
+    <div style={{ padding: "16px", maxWidth: "1200px", margin: "0 auto" }}>
       {artworks.length === 0 ? (
         <p style={{ textAlign: "center", fontSize: "16px", color: "#666" }}>
           No artworks found.
@@ -122,8 +127,8 @@ const Artworks = () => {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
-            gap: "16px",
+            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+            gap: "20px",
           }}
         >
           {artworks.map((artwork) => (
@@ -135,19 +140,22 @@ const Artworks = () => {
               <div
                 style={{
                   background: "#fff",
-                  borderRadius: "10px",
+                  borderRadius: "12px",
                   overflow: "hidden",
                   display: "flex",
                   flexDirection: "column",
+                  justifyContent: "space-between",
+                  alignItems: "center",
                   boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                  transition: "transform 0.2s ease-in-out",
+                  height: "320px", // fixed height for equal sizing
                 }}
               >
                 <div
                   style={{
                     width: "100%",
-                    height: "180px",
+                    height: "75%", // space for 3D or image
                     background: "#f3f3f3",
+                    flexShrink: 0,
                   }}
                 >
                   {artwork.model ? (
@@ -165,11 +173,7 @@ const Artworks = () => {
                         <RotatingModel url={artwork.model} />
                       </Suspense>
                       <Environment preset="sunset" />
-                      <OrbitControls
-                        enableZoom={false}
-                        enablePan={false}
-                        autoRotate={false}
-                      />
+                      <OrbitControls enableZoom={false} enablePan={false} />
                     </Canvas>
                   ) : (
                     <img
@@ -186,18 +190,42 @@ const Artworks = () => {
                     />
                   )}
                 </div>
-                <div style={{ padding: "8px", textAlign: "center" }}>
+
+                {/* Fixed text area */}
+                <div
+                  style={{
+                    width: "100%",
+                    textAlign: "center",
+                    padding: "8px",
+                    backgroundColor: "#fff",
+                    flexShrink: 0,
+                  }}
+                >
                   <h2
                     style={{
                       fontSize: "14px",
                       fontWeight: "600",
                       color: "#333",
-                      marginBottom: "4px",
+                      margin: "0",
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
                     }}
+                    title={artwork.title}
                   >
                     {artwork.title}
                   </h2>
-                  <p style={{ fontSize: "12px", color: "#666" }}>
+                  <p
+                    style={{
+                      fontSize: "12px",
+                      color: "#666",
+                      margin: "4px 0 0 0",
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                    title={artwork.artist}
+                  >
                     {artwork.artist}
                   </p>
                 </div>
