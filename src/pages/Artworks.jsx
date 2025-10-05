@@ -58,7 +58,7 @@ const SwayingModel = ({ url }) => {
     }
   });
 
-  return <primitive object={gltf.scene} scale={[0.5, 0.5, 0.5]}/>;
+  return <primitive object={gltf.scene} scale={[0.5, 0.5, 0.5]} />;
 };
 
 /* ===========================
@@ -119,7 +119,13 @@ const Artworks = () => {
     );
 
   return (
-    <div style={{ padding: "16px", maxWidth: "900px", margin: "0 auto" }}>
+    <div
+      style={{
+        padding: "16px",
+        maxWidth: "1000px",
+        margin: "0 auto",
+      }}
+    >
       {artworks.length === 0 ? (
         <p style={{ textAlign: "center", fontSize: "16px", color: "#666" }}>
           No artworks found.
@@ -128,9 +134,10 @@ const Artworks = () => {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(2, 1fr)", // always 2 columns
-            gap: "16px",
+            gridTemplateColumns: "repeat(2, 1fr)",
+            gap: "12px",
             justifyItems: "center",
+            width: "100%",
           }}
         >
           {artworks.map((artwork) => (
@@ -141,6 +148,7 @@ const Artworks = () => {
                 textDecoration: "none",
                 color: "inherit",
                 width: "100%",
+                maxWidth: "480px",
               }}
             >
               <div
@@ -150,20 +158,21 @@ const Artworks = () => {
                   overflow: "hidden",
                   display: "flex",
                   flexDirection: "column",
-                  justifyContent: "space-between",
                   alignItems: "center",
                   boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                  height: "320px",
                   transition: "transform 0.2s ease-in-out",
-                  padding: "8px",
+                  padding: "6px",
+                  height: "auto",
+                  aspectRatio: "3/4",
                 }}
               >
                 {/* Model or Image */}
                 <div
                   style={{
                     width: "100%",
-                    height: "70%",
+                    flex: 1,
                     background: "#f3f3f3",
+                    borderRadius: "8px",
                   }}
                 >
                   {artwork.model ? (
@@ -193,44 +202,38 @@ const Artworks = () => {
                         width: "100%",
                         height: "100%",
                         objectFit: "cover",
+                        borderRadius: "8px",
                       }}
                     />
                   )}
                 </div>
 
-                {/* Text area (auto-resizing font) */}
+                {/* Text area */}
                 <div
                   style={{
                     width: "100%",
                     textAlign: "center",
                     backgroundColor: "#fff",
-                    borderTop: "1px solid #eee",
                     padding: "6px 4px",
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "center",
-                    alignItems: "center",
                   }}
                 >
                   <h2
                     style={{
-                      fontSize: "clamp(10px, 2vw, 14px)",
+                      fontSize: "clamp(11px, 2.2vw, 15px)",
                       fontWeight: "600",
                       color: "#333",
                       margin: "0",
                       lineHeight: "1.2",
-                      wordBreak: "break-word",
                     }}
                   >
                     {artwork.title}
                   </h2>
                   <p
                     style={{
-                      fontSize: "clamp(9px, 1.8vw, 12px)",
+                      fontSize: "clamp(10px, 2vw, 13px)",
                       color: "#666",
                       margin: "4px 0 0 0",
                       lineHeight: "1.2",
-                      wordBreak: "break-word",
                     }}
                   >
                     {artwork.artist}
