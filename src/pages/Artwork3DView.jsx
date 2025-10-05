@@ -1,13 +1,18 @@
 // src/pages/Artwork3DView.jsx
-import React, { useEffect, useState, Suspense, useRef, useMemo } from "react";
+import React, { useEffect, useState, Suspense, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { Canvas, useLoader, useThree } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
+import {
+  OrbitControls,
+  Html,
+  useProgress,
+  Environment,
+} from "@react-three/drei";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { KTX2Loader } from "three/examples/jsm/loaders/KTX2Loader.js";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
-import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js"; // ✅ add this
+import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
 import {
   PlayCircle,
   PauseCircle,
@@ -16,32 +21,53 @@ import {
 } from "lucide-react";
 import "./artwork.css";
 
+/* ===========================
+   Loader Component
+=========================== */
+const Loader = () => {
+  const { progress } = useProgress();
+  return (
+    <Html center>
+      <div style={{ color: "#555", fontSize: "16px" }}>
+        Loading... {progress.toFixed(0)}%
+      </div>
+    </Html>
+  );
+};
 
 /* ===========================
-   Model Component (Fixed)
+   Model Component (Improved)
 =========================== */
 const Model = ({ url }) => {
-  const { gl } = useThree(); // ✅ Access renderer from React Three Fiber
-
+  const { gl } = useThree();
   const gltf = useLoader(GLTFLoader, url, (loader) => {
-    // ✅ 1. Set Meshopt Decoder (must come first)
     loader.setMeshoptDecoder(MeshoptDecoder);
 
-    // ✅ 2. Set Draco loader (for Draco-compressed files)
     const dracoLoader = new DRACOLoader();
     dracoLoader.setDecoderPath(
       "https://www.gstatic.com/draco/versioned/decoders/1.5.6/"
     );
     loader.setDRACOLoader(dracoLoader);
 
-    // ✅ 3. Set KTX2 loader (for texture compression)
     const ktx2Loader = new KTX2Loader()
-      .setTranscoderPath(
-        "https://unpkg.com/three@0.164.0/examples/jsm/libs/basis/"
-      )
+      .setTranscoderPath("https://unpkg.com/three@0.164.0/examples/jsm/libs/basis/")
       .detectSupport(gl);
     loader.setKTX2Loader(ktx2Loader);
   });
+
+  // ✅ Auto-center and scale the model
+  useEffect(() => {
+    if (!gltf.scene) return;
+
+    const box = new THREE.Box3().setFromObject(gltf.scene);
+    const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
+
+    gltf.scene.position.sub(center); // Center model
+    const maxAxis = Math.max(size.x, size.y, size.z);
+    const scale = 3 / maxAxis; // Fit within camera view
+    gltf.scene.scale.setScalar(scale);
+  }, [gltf]);
 
   return <primitive object={gltf.scene} />;
 };
@@ -60,7 +86,6 @@ const Artwork3DView = () => {
   const synthRef = useRef(window.speechSynthesis);
   const utteranceRef = useRef(null);
 
-  // Base URL for API
   const baseUrl =
     import.meta.env.VITE_API_URL || process.env.REACT_APP_API_URL || "";
 
@@ -139,15 +164,12 @@ const Artwork3DView = () => {
 
   return (
     <div style={{ padding: "16px", textAlign: "center" }}>
-      <h1 style={{ fontSize: "24px", fontWeight: "bold", marginBottom: "12px" }}>
-        {artwork.title}
-      </h1>
-
       <div style={{ height: "500px", width: "100%" }}>
         <Canvas camera={{ position: [0, 0, 5], fov: 50 }}>
-          <ambientLight intensity={0.5} />
-          <directionalLight position={[5, 5, 5]} />
-          <Suspense fallback={null}>
+          <ambientLight intensity={0.6} />
+          <directionalLight position={[5, 5, 5]} intensity={1.5} castShadow />
+          <hemisphereLight skyColor="#ffffff" groundColor="#666666" intensity={0.5} />
+          <Suspense fallback={<Loader />}>
             {artwork.modelUrl ? (
               <Model url={artwork.modelUrl} />
             ) : (
@@ -158,6 +180,7 @@ const Artwork3DView = () => {
             )}
           </Suspense>
           <OrbitControls />
+          <Environment preset="city" />
         </Canvas>
 
         {/* Description buttons bar (collapsed) */}
