@@ -122,8 +122,9 @@ const Artworks = () => {
     <div
       style={{
         padding: "16px",
-        maxWidth: "1000px",
-        margin: "0 auto",
+        width: "100%",
+        display: "flex",
+        justifyContent: "center",
       }}
     >
       {artworks.length === 0 ? (
@@ -134,10 +135,11 @@ const Artworks = () => {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(2, 1fr)",
-            gap: "12px",
-            justifyItems: "center",
+            gridTemplateColumns: "repeat(2, minmax(0, 400px))", // fixed max width
+            gap: "14px",
+            justifyContent: "center", // centers both columns
             width: "100%",
+            maxWidth: "900px",
           }}
         >
           {artworks.map((artwork) => (
@@ -147,23 +149,21 @@ const Artworks = () => {
               style={{
                 textDecoration: "none",
                 color: "inherit",
-                width: "100%",
-                maxWidth: "480px",
               }}
             >
               <div
                 style={{
                   background: "#fff",
-                  borderRadius: "12px",
+                  borderRadius: "14px",
                   overflow: "hidden",
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
                   boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
                   transition: "transform 0.2s ease-in-out",
-                  padding: "6px",
                   height: "auto",
                   aspectRatio: "3/4",
+                  padding: "6px",
                 }}
               >
                 {/* Model or Image */}
