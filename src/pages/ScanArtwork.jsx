@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import Webcam from "react-webcam";
 import * as tmImage from "@teachablemachine/image";
 import "./ScanArtwork.css";
+
 import {
   ArrowDownCircle,
   ArrowUpCircle,
