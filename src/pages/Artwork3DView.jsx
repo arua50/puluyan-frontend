@@ -173,7 +173,7 @@ const Artwork3DView = () => {
             {artwork.modelUrl ? (
               <Model url={artwork.modelUrl} />
             ) : (
-              <mesh rotation={[ 0.2, 0.7, 0]}>
+              <mesh rotation={[ 0.5, 0.7, 0]}>
                 <boxGeometry />
                 <meshStandardMaterial color="gray" />
               </mesh>
