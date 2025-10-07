@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { ArrowLeftCircle } from "lucide-react"; // ✅ added icon import
 import "./artwork.css";
 
 /* ===========================
@@ -7,9 +8,11 @@ import "./artwork.css";
 =========================== */
 const Artworks = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [artworks, setArtworks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [exhibitionTitle, setExhibitionTitle] = useState("Exhibition");
 
   const baseUrl =
     import.meta.env.VITE_API_URL || process.env.REACT_APP_API_URL || "";
@@ -30,11 +33,21 @@ const Artworks = () => {
         if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
 
         const json = await response.json();
+
+        if (json.data.length > 0) {
+          const exbName =
+            json.data[0]?.exhibition?.exb_title || // ✅ this is the correct path
+            json.data[0]?.attributes?.exhibition?.exb_title ||
+            "Exhibition";
+          setExhibitionTitle(exbName);
+        }
+
         const simplified = json.data.map((item) => ({
           id: item.id,
-          title: item.art_title || "Untitled",
-          artist: item.artist || "Unknown Artist",
-          image: getFileUrl(item.art_image),
+          title: item.art_title || item.attributes?.art_title || "Untitled",
+          artist: item.artist || item.attributes?.artist || "Unknown Artist",
+          image: getFileUrl(item.art_image || item.attributes?.art_image),
+        
         }));
 
         setArtworks(simplified);
@@ -64,9 +77,65 @@ const Artworks = () => {
         padding: "16px",
         width: "100%",
         display: "flex",
-        justifyContent: "center",
+        flexDirection: "column",
+        alignItems: "center",
       }}
     >
+      {/* Back button + Exhibition title */}
+      <div
+        style={{
+          width: "100%",
+          maxWidth: "900px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: "16px",
+        }}
+      >
+        {/* ✅ Updated Back Button with Icon */}
+        <button
+          onClick={() => navigate(-1)}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: "transparent",
+            color: "#1e1e1e",
+            border: "none",
+            borderRadius: "50%",
+            width: "40px",
+            height: "40px",
+            cursor: "pointer",
+            transition: "all 0.2s ease-in-out",
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.transform = "scale(1.1)";
+            e.currentTarget.style.color = "#323232ff";
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.transform = "scale(1)";
+            e.currentTarget.style.color = "#1e1e1e";
+          }}
+        >
+          <ArrowLeftCircle size={25} />
+        </button>
+
+        <h1
+          style={{
+             fontSize: "clamp(16px, 3vw, 24px)",
+              fontWeight: "700",
+              textAlign: "center",
+              color: "#333",
+              flex: 1,
+              margin: 0,
+              textTransform: "uppercase", // ✅ all caps
+          }}
+        >
+          {exhibitionTitle}
+        </h1>
+      </div>
+
+      {/* Artworks Grid */}
       {artworks.length === 0 ? (
         <p style={{ textAlign: "center", fontSize: "16px", color: "#666" }}>
           No artworks found.
@@ -101,12 +170,10 @@ const Artworks = () => {
                   alignItems: "center",
                   boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
                   transition: "transform 0.2s ease-in-out",
-                  height: "auto",
                   aspectRatio: "3/4",
                   padding: "6px",
                 }}
               >
-                {/* Artwork Image */}
                 <div
                   style={{
                     width: "100%",
@@ -130,7 +197,6 @@ const Artworks = () => {
                   />
                 </div>
 
-                {/* Text area */}
                 <div
                   style={{
                     width: "100%",
