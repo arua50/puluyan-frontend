@@ -207,7 +207,7 @@ const Artworks = () => {
                 >
                   <h2
                     style={{
-                      fontSize: "clamp(13px, 2.2vw, 15px)",
+                      fontSize: "clamp(14px, 2.2vw, 15px)",
                       fontWeight: "600",
                       color: "#333",
                       margin: "0",
@@ -218,10 +218,10 @@ const Artworks = () => {
                   </h2>
                   <p
                     style={{
-                      fontSize: "clamp(12px, 2vw, 13px)",
+                      fontSize: "clamp(13px, 2vw, 14px)",
                       color: "#666",
-                      margin: "4px 0 0 0",
-                      lineHeight: "1.2",
+                      margin: "2px 0 0 0",
+                      lineHeight: "1",
                     }}
                   >
                     {artwork.artist}
