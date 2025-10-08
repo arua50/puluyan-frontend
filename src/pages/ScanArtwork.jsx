@@ -14,7 +14,7 @@ import {
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, useGLTF } from "@react-three/drei";
 /* CONFIG */
-const MODEL_URL = "https://teachablemachine.withgoogle.com/models/yhD5GdSXk/";
+const MODEL_URL = "https://teachablemachine.withgoogle.com/models/ecR2jbwMN/";
 const API_BASE =
   "https://puluyan-back.onrender.com/api/artworks?populate=*";
 /* 3D Model Component with orientation fix */
