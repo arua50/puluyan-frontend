@@ -202,23 +202,23 @@ const Artworks = () => {
                     width: "100%",
                     textAlign: "center",
                     backgroundColor: "#fff",
-                    padding: "15px 15px",
+                    padding: "6px 7px 6px",
                   }}
                 >
                   <h2
                     style={{
-                      fontSize: "clamp(15px, 2.2vw, 15px)",
+                      fontSize: "clamp(13px, 2.2vw, 15px)",
                       fontWeight: "600",
                       color: "#333",
                       margin: "0",
-                      lineHeight: "1.5",
+                      lineHeight: "1",
                     }}
                   >
                     {artwork.title}
                   </h2>
                   <p
                     style={{
-                      fontSize: "clamp(13px, 2vw, 13px)",
+                      fontSize: "clamp(12px, 2vw, 13px)",
                       color: "#666",
                       margin: "4px 0 0 0",
                       lineHeight: "1.2",
