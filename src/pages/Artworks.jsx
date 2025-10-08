@@ -202,7 +202,7 @@ const Artworks = () => {
                     width: "100%",
                     textAlign: "center",
                     backgroundColor: "#fff",
-                    padding: "6px 7px 6px",
+                    padding: "15px 7px 15px",
                   }}
                 >
                   <h2
